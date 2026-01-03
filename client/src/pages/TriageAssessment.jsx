@@ -5,17 +5,17 @@ import { motion, AnimatePresence } from "framer-motion";
 
 // Custom UI Components (Replacements for Shadcn)
 const CustomButton = ({ children, onClick, variant = 'primary', className = '', size = 'md', disabled }) => {
-    const baseStyles = "inline-flex items-center justify-center rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none";
+    const baseStyles = "inline-flex items-center justify-center rounded-xl font-medium transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none";
     const variants = {
-        primary: "bg-brand-600 text-white hover:bg-brand-700 shadow-lg shadow-brand-100",
-        outline: "bg-white text-slate-600 border-2 border-slate-100 hover:border-brand-200 hover:text-brand-600 shadow-sm",
-        hero: "bg-gradient-to-r from-brand-600 to-indigo-600 text-white hover:opacity-90 shadow-xl shadow-brand-100",
+        primary: "bg-brand-600 text-white hover:bg-brand-700 shadow-md shadow-brand-100",
+        outline: "bg-white text-slate-600 border border-slate-200 hover:border-brand-200 hover:text-brand-600 shadow-sm",
+        hero: "bg-gradient-to-r from-brand-600 to-indigo-600 text-white hover:opacity-90 shadow-lg shadow-brand-100",
         ghost: "text-slate-500 hover:text-brand-600 hover:bg-brand-50"
     };
     const sizes = {
-        sm: "px-4 py-2 text-sm",
-        md: "px-6 py-3 text-base",
-        lg: "px-8 py-4 text-lg"
+        sm: "px-3 py-1.5 text-sm",
+        md: "px-4 py-2 text-sm",
+        lg: "px-6 py-3 text-base"
     };
 
     return (
@@ -26,7 +26,7 @@ const CustomButton = ({ children, onClick, variant = 'primary', className = '', 
 };
 
 const CustomProgress = ({ value }) => (
-    <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+    <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
         <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${value}%` }}
@@ -110,8 +110,8 @@ const TriageAssessment = () => {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 py-12 px-4 selection:bg-brand-100 selection:text-brand-900">
-            <div className="max-w-3xl mx-auto">
+        <div className="min-h-screen bg-slate-50 py-4 px-4 selection:bg-brand-100 selection:text-brand-900">
+            <div className="max-w-xl mx-auto">
                 <AnimatePresence>
                     {showIntro && (
                         <motion.div
@@ -121,21 +121,21 @@ const TriageAssessment = () => {
                             exit={{ opacity: 0 }}
                         >
                             <motion.div
-                                className="bg-white p-8 md:p-12 rounded-[2.5rem] shadow-2xl max-w-lg w-full text-center relative overflow-hidden"
+                                className="bg-white p-4 rounded-xl shadow-lg max-w-sm w-full text-center relative overflow-hidden"
                                 initial={{ scale: 0.9, y: 20, opacity: 0 }}
                                 animate={{ scale: 1, y: 0, opacity: 1 }}
                                 exit={{ scale: 0.9, y: 20, opacity: 0 }}
                             >
                                 <div className="relative z-10">
-                                    <div className="w-20 h-20 bg-brand-50 rounded-3xl flex items-center justify-center mx-auto mb-8 text-brand-600 animate-pulse">
-                                        <Heart size={40} fill="currentColor" />
+                                    <div className="w-12 h-12 bg-brand-50 rounded-xl flex items-center justify-center mx-auto mb-4 text-brand-600">
+                                        <Heart size={24} fill="currentColor" />
                                     </div>
-                                    <h2 className="text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">Welcome 🌸</h2>
-                                    <p className="text-xl text-slate-600 mb-10 leading-relaxed">
-                                        This short wellness check helps you reflect on how you’ve been
+                                    <h2 className="text-xl font-bold text-slate-900 mb-2">Welcome 🌸</h2>
+                                    <p className="text-sm text-slate-600 mb-4">
+                                        This short wellness check helps you reflect on how you've been
                                         feeling lately. It's safe, private, and confidential ❤.
                                     </p>
-                                    <CustomButton onClick={() => setShowIntro(false)} size="lg" className="w-full">
+                                    <CustomButton onClick={() => setShowIntro(false)} size="md" className="w-full">
                                         Start Check-In
                                     </CustomButton>
                                 </div>
