@@ -30,7 +30,7 @@ app.use(cors({
 }));
 
 // Handle preflight requests explicitly
-app.options('*', cors());
+app.options('/*', cors());
 
 const io = new Server(server, {
   cors: {
