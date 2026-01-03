@@ -11,7 +11,12 @@ import { motion, AnimatePresence } from "framer-motion";
 const SOCKET_URL = import.meta.env.VITE_API_URL;
 
 // socket instance
-const socket = io(SOCKET_URL);
+const socket = io(SOCKET_URL, {
+  path: "/socket.io",
+  transports: ["websocket"]
+});
+
+socket.on("connect", () => console.log("Connected ✅ on student side"));
 
 const ChatInterface = () => {
     const navigate = useNavigate();
