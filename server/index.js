@@ -77,6 +77,9 @@ const authorizeRoles = (...roles) => {
 };
 
 // --- Routes ---
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ status: "Backend is alive 🚀" });
+});
 
 /**
  * 1. School Access Request
