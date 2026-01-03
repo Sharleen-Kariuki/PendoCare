@@ -9,8 +9,9 @@ import {
 import { io } from "socket.io-client";
 import { motion, AnimatePresence } from "framer-motion";
 
+const SOCKET_URL = import.meta.env.VITE_API_URL;
 // socket instance
-const socket = io("http://localhost:3000");
+const socket = io(SOCKET_URL);
 
 const CounsellorDashboard = () => {
     const navigate = useNavigate();

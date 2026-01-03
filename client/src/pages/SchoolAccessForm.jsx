@@ -19,7 +19,7 @@ const SchoolAccessForm = () => {
         setLoading(true);
         setError('');
         try {
-            await axios.post('http://localhost:3000/api/request-access', formData);
+            await axios.post(import.meta.env.VITE_API_URL + '/api/request-access', formData);
             setSubmitted(true);
         } catch (err) {
             console.error("Submission error:", err);
