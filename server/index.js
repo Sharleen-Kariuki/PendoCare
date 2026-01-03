@@ -12,36 +12,26 @@ const jwt = require('jsonwebtoken');
 
 // --- Initialization ---
 const app = express();
-
+const server = http.createServer(app);
 const allowedOrigins = [
   "http://localhost:5173",
   process.env.CLIENT_URL
-].filter(Boolean); // remove undefined
+];
 
 app.use(cors({
-  origin: function(origin, callback) {
-    if (!origin) return callback(null, true); // allow Postman, curl
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    callback(new Error('CORS not allowed'));
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("CORS not allowed"));
+    }
   },
-  credentials: true,
-  methods: ["GET","POST","PUT","DELETE","OPTIONS"],
-  allowedHeaders: ["Content-Type","Authorization"]
+  credentials: true
 }));
-
-// Preflight for all routes (required for browser polling)
-app.options('/*', cors({
-  origin: allowedOrigins,
-  credentials: true,
-  methods: ["GET","POST","PUT","DELETE","OPTIONS"],
-  allowedHeaders: ["Content-Type","Authorization"]
-}));
-
-const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins, // must exactly match the frontends
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
     credentials: true
   },
@@ -49,10 +39,10 @@ const io = new Server(server, {
 });
 
 
-
 // --- Middleware ---
 app.use(helmet()); // Basic security headers
 app.use(morgan('dev')); // Logging
+// app.use(cors());
 app.use(express.json());
 
 // --- Supabase Config ---
