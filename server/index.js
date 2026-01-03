@@ -14,28 +14,33 @@ const jwt = require('jsonwebtoken');
 const app = express();
 const server = http.createServer(app);
 const allowedOrigins = [
-  "http://localhost:5173",
-  process.env.CLIENT_URL
+    "http://localhost:5173",
+    process.env.CLIENT_URL ? process.env.CLIENT_URL.replace(/\/$/, "") : ""
 ];
 
 app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("CORS not allowed"));
-    }
-  },
-  credentials: true
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+
+        const normalizedOrigin = origin.replace(/\/$/, "");
+        if (allowedOrigins.includes(origin) || allowedOrigins.includes(normalizedOrigin)) {
+            callback(null, true);
+        } else {
+            console.log(`[CORS Blocked] Origin: ${origin}. Allowed: ${JSON.stringify(allowedOrigins)}`);
+            callback(new Error("CORS not allowed - Check CLIENT_URL on Render"));
+        }
+    },
+    credentials: true
 }));
 
 const io = new Server(server, {
-  cors: {
-    origin: allowedOrigins,
-    methods: ["GET", "POST"],
-    credentials: true
-  },
-  transports: ["websocket", "polling"]
+    cors: {
+        origin: allowedOrigins,
+        methods: ["GET", "POST"],
+        credentials: true
+    },
+    transports: ["websocket", "polling"]
 });
 
 
@@ -97,7 +102,7 @@ const authorizeRoles = (...roles) => {
 
 // --- Routes ---
 app.get("/api/health", (req, res) => {
-  res.status(200).json({ status: "Backend is alive 🚀" });
+    res.status(200).json({ status: "Backend is alive 🚀" });
 });
 
 /**
@@ -284,9 +289,32 @@ app.post('/api/verify-access', async (req, res) => {
 
     try {
         // 1. Super Admin Check
-        if (code === 'ADMIN-1234' || code === process.env.ADMIN_CODE) {
-            console.log(`[Auth] Match found: Super Admin`);
-            const user = { name: 'Super Admin', role: 'admin' };
+        // First: Check Database for 'admins' table
+        let adminUser = null;
+        try {
+            const { data, error } = await supabase
+                .from('admins')
+                .select('*')
+                .eq('access_code', code)
+                .single();
+
+            if (data && !error) {
+                adminUser = data;
+            }
+        } catch (dbErr) {
+            // Table might not exist yet, ignore
+            console.log("Admin table check failed (table might be missing), falling back to env/hardcode");
+        }
+
+        // Second: Fallback to Environment/Hardcoded if not found in DB
+        const isHardcodedAdmin = (code === 'ADMIN-1234' || code === process.env.ADMIN_CODE);
+
+        if (adminUser || isHardcodedAdmin) {
+            console.log(`[Auth] Match found: Super Admin ${adminUser ? '(DB)' : '(Legacy)'}`);
+            const user = adminUser
+                ? { id: adminUser.id, name: adminUser.username, role: 'admin' }
+                : { name: 'Super Admin', role: 'admin' };
+
             const token = jwt.sign(user, process.env.JWT_SECRET, { expiresIn: '8h' });
             return res.json({
                 role: 'admin',
