@@ -13,12 +13,31 @@ const jwt = require('jsonwebtoken');
 // --- Initialization ---
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {
-    cors: {
-        origin: process.env.CLIENT_URL || "http://localhost:5173",
-        methods: ["GET", "POST"]
+const allowedOrigins = [
+  "http://localhost:5173",
+  process.env.CLIENT_URL
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("CORS not allowed"));
     }
+  },
+  credentials: true
+}));
+
+const io = new Server(httpServer, {
+  cors: {
+    origin: allowedOrigins,
+    methods: ["GET", "POST"],
+    credentials: true
+  },
+  transports: ["websocket", "polling"]
 });
+
 
 // --- Middleware ---
 app.use(helmet()); // Basic security headers
