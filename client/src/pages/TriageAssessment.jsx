@@ -110,28 +110,27 @@ const TriageAssessment = () => {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 py-4 px-4 selection:bg-brand-100 selection:text-brand-900">
-            <div className="max-w-xl mx-auto">
+        <div className="min-h-screen bg-slate-50 py-6 px-4 selection:bg-brand-100 selection:text-brand-900">
+            <div className="max-w-2xl mx-auto">
                 <AnimatePresence>
                     {showIntro && (
                         <motion.div
-                            className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+                            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                         >
                             <motion.div
-                                className="bg-white p-4 rounded-xl shadow-lg max-w-sm w-full text-center relative overflow-hidden"
-                                initial={{ scale: 0.9, y: 20, opacity: 0 }}
-                                animate={{ scale: 1, y: 0, opacity: 1 }}
-                                exit={{ scale: 0.9, y: 20, opacity: 0 }}
+                                className="bg-white p-6 rounded-2xl shadow-lg max-w-md mx-4 text-center"
+                                initial={{ scale: 0.8, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.8, opacity: 0 }}
+                                transition={{ duration: 0.3 }}
                             >
                                 <div className="relative z-10">
-                                    <div className="w-12 h-12 bg-brand-50 rounded-xl flex items-center justify-center mx-auto mb-4 text-brand-600">
-                                        <Heart size={24} fill="currentColor" />
-                                    </div>
-                                    <h2 className="text-xl font-bold text-slate-900 mb-2">Welcome 🌸</h2>
-                                    <p className="text-sm text-slate-600 mb-4">
+                                    <Heart className="w-10 h-10 mx-auto text-brand-600 mb-4" />
+                                    <h2 className="text-2xl font-semibold mb-3">Welcome 🌸</h2>
+                                    <p className="text-slate-600 mb-6">
                                         This short wellness check helps you reflect on how you've been
                                         feeling lately. It's safe, private, and confidential ❤.
                                     </p>

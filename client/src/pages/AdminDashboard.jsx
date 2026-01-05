@@ -175,101 +175,103 @@ const AdminDashboard = () => {
                 </div>
             </div>
 
-            {/* Main Content */}
-            <div className="flex-1 p-6 overflow-y-auto">
-                <header className="flex justify-between items-center mb-6">
-                    <div>
-                        <h1 className="text-xl font-black text-slate-900 tracking-tight capitalize">{activeTab.replace('-', ' ')}</h1>
-                        <p className="text-xs text-slate-500 font-medium">Manage platform access and staff accounts.</p>
-                    </div>
-                    {activeTab === 'counselors' && (
-                        <button
-                            onClick={() => openCounselorModal()}
-                            className="bg-brand-600 text-white px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 shadow-md shadow-brand-100 hover:bg-brand-700 transition-all active:scale-95"
-                        >
-                            <Plus size={16} /> Add Counselor
-                        </button>
-                    )}
-                </header>
+            
+                        <div className="flex-1 p-6 overflow-y-auto">
+                            <header className="flex justify-between items-center mb-6">
+                                <div>
+                                    <h1 className="text-xl font-black text-slate-900 tracking-tight capitalize">{activeTab.replace('-', ' ')}</h1>
+                                    <p className="text-xs text-slate-500 font-medium">Manage platform access and staff accounts.</p>
+                                </div>
+                                {activeTab === 'counselors' && (
+                                    <button
+                                        onClick={() => openCounselorModal()}
+                                        className="bg-brand-600 text-white px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 shadow-md shadow-brand-100 hover:bg-brand-700 transition-all active:scale-95"
+                                    >
+                                        <Plus size={16} /> Add Counselor
+                                    </button>
+                                )}
+                            </header>
 
-                <div className="bg-white rounded-2xl border border-slate-100 shadow-lg shadow-slate-200/50 overflow-hidden">
-                    {loading ? (
-                        <div className="p-10 text-center text-slate-400 font-bold text-sm">Loading data...</div>
-                    ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left">
-                                <thead className="bg-slate-50/50 border-b border-slate-100">
-                                    {activeTab === 'counselors' ? (
-                                        <tr>
-                                            <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Name</th>
-                                            <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Speciality</th>
-                                            <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Email</th>
-                                            <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Assigned School</th>
-                                            <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Access Code</th>
-                                            <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
-                                        </tr>
-                                    ) : (
-                                        <tr>
-                                            <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">School Name</th>
-                                            <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Contact</th>
-                                            <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Email</th>
-                                            <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Access Code</th>
-                                            <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
-                                        </tr>
-                                    )}
-                                </thead>
-                                <tbody className="divide-y divide-slate-50">
-                                    <AnimatePresence mode="wait">
-                                        {activeTab === 'pending' && pendingRequests.map((r) => (
-                                            <motion.tr key={r.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="hover:bg-slate-50/50 transition-colors">
-                                                <td className="px-4 py-3 font-bold text-slate-900 text-sm">{r.school_name}</td>
-                                                <td className="px-4 py-3 text-slate-500 font-medium text-xs">{r.contact_person}</td>
-                                                <td className="px-4 py-3 text-slate-500 font-medium text-xs">{r.school_email}</td>
-                                                <td className="px-4 py-3 text-right space-x-2">
-                                                    <button onClick={() => handleReject(r.id)} className="text-red-500 font-bold text-xs hover:text-red-700">Reject</button>
-                                                    <button onClick={() => handleApprove(r.id)} className="bg-brand-50 text-brand-600 px-3 py-1.5 rounded-lg font-bold text-xs hover:bg-brand-100">Approve</button>
-                                                </td>
-                                            </motion.tr>
-                                        ))}
+                            <div className="bg-white rounded-2xl border border-slate-100 shadow-lg shadow-slate-200/50 overflow-hidden">
+                                {loading ? (
+                                    <div className="p-10 text-center text-slate-400 font-bold text-sm">Loading data...</div>
+                                ) : (
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-left">
+                                            <thead className="bg-slate-50/50 border-b border-slate-100">
+                                                {activeTab === 'counselors' ? (
+                                                    <tr>
+                                                        <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Name</th>
+                                                        <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Speciality</th>
+                                                        <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Email</th>
+                                                        <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Assigned School</th>
+                                                        <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Access Code</th>
+                                                        <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
+                                                    </tr>
+                                                ) : (
+                                                    <tr>
+                                                        <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">School Name</th>
+                                                        <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Contact</th>
+                                                        <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Email</th>
+                                                        {activeTab === 'approved' && (
+                                                            <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Access Code</th>
+                                                        )}
+                                                        <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
+                                                    </tr>
+                                                )}
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-50">
+                                                <AnimatePresence mode="wait">
+                                                    {activeTab === 'pending' && pendingRequests.map((r) => (
+                                                        <motion.tr key={r.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="hover:bg-slate-50/50 transition-colors">
+                                                            <td className="px-4 py-3 font-bold text-slate-900 text-sm">{r.school_name}</td>
+                                                            <td className="px-4 py-3 text-slate-500 font-medium text-xs">{r.contact_person}</td>
+                                                            <td className="px-4 py-3 text-slate-500 font-medium text-xs">{r.school_email}</td>
+                                                            <td className="px-4 py-3 text-right space-x-2">
+                                                                <button onClick={() => handleReject(r.id)} className="text-red-500 font-bold text-xs hover:text-red-700">Reject</button>
+                                                                <button onClick={() => handleApprove(r.id)} className="bg-brand-50 text-brand-600 px-3 py-1.5 rounded-lg font-bold text-xs hover:bg-brand-100">Approve</button>
+                                                            </td>
+                                                        </motion.tr>
+                                                    ))}
 
-                                        {activeTab === 'approved' && approvedSchools.map((r) => (
-                                            <motion.tr key={r.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="hover:bg-slate-50/50 transition-colors">
-                                                <td className="px-4 py-3 font-bold text-slate-900 text-sm">{r.school_name}</td>
-                                                <td className="px-4 py-3 text-slate-500 font-medium text-xs">{r.contact_person}</td>
-                                                <td className="px-4 py-3 text-slate-500 font-medium text-xs">{r.school_email}</td>
-                                                <td className="px-4 py-3">
-                                                    <span className="bg-brand-50 text-brand-600 px-2 py-1 rounded-lg font-bold text-xs font-mono">{r.access_code}</span>
-                                                </td>
-                                                <td className="px-4 py-3 text-right">
-                                                    <span className="bg-green-50 text-green-600 px-2 py-0.5 rounded-full font-bold text-[10px] uppercase tracking-widest">Active</span>
-                                                </td>
-                                            </motion.tr>
-                                        ))}
+                                                    {activeTab === 'approved' && approvedSchools.map((r) => (
+                                                        <motion.tr key={r.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="hover:bg-slate-50/50 transition-colors">
+                                                            <td className="px-4 py-3 font-bold text-slate-900 text-sm">{r.school_name}</td>
+                                                            <td className="px-4 py-3 text-slate-500 font-medium text-xs">{r.contact_person}</td>
+                                                            <td className="px-4 py-3 text-slate-500 font-medium text-xs">{r.school_email}</td>
+                                                            <td className="px-4 py-3">
+                                                                <span className="bg-brand-50 text-brand-600 px-2 py-1 rounded-lg font-bold text-xs font-mono">{r.access_code}</span>
+                                                            </td>
+                                                            <td className="px-4 py-3 text-right">
+                                                                <span className="bg-green-50 text-green-600 px-2 py-0.5 rounded-full font-bold text-[10px] uppercase tracking-widest">Active</span>
+                                                            </td>
+                                                        </motion.tr>
+                                                    ))}
 
-                                        {activeTab === 'counselors' && counselors.map((c) => (
-                                            <motion.tr key={c.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="hover:bg-slate-50/50 transition-colors">
-                                                <td className="px-4 py-3 font-bold text-slate-900 text-sm">{c.name}</td>
-                                                <td className="px-4 py-3 text-slate-500 font-medium text-xs">{c.specialty}</td>
-                                                <td className="px-4 py-3 text-slate-500 font-medium text-xs">{c.email}</td>
-                                                <td className="px-4 py-3 text-slate-500 font-medium text-xs">{c.assigned_school}</td>
-                                                <td className="px-4 py-3">
-                                                    <span className="bg-brand-50 text-brand-600 px-2 py-1 rounded-lg font-bold text-xs">{c.access_code}</span>
-                                                </td>
-                                                <td className="px-4 py-3 text-right space-x-3">
-                                                    <button onClick={() => openCounselorModal(c)} className="text-brand-600 hover:text-brand-700 transition-colors"><Edit3 size={16} /></button>
-                                                    <button onClick={() => handleDeleteCounselor(c.id)} className="text-red-500 hover:text-red-700 transition-colors"><Trash2 size={16} /></button>
-                                                </td>
-                                            </motion.tr>
-                                        ))}
-                                    </AnimatePresence>
-                                </tbody>
-                            </table>
+                                                    {activeTab === 'counselors' && counselors.map((c) => (
+                                                        <motion.tr key={c.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="hover:bg-slate-50/50 transition-colors">
+                                                            <td className="px-4 py-3 font-bold text-slate-900 text-sm">{c.name}</td>
+                                                            <td className="px-4 py-3 text-slate-500 font-medium text-xs">{c.specialty}</td>
+                                                            <td className="px-4 py-3 text-slate-500 font-medium text-xs">{c.email}</td>
+                                                            <td className="px-4 py-3 text-slate-500 font-medium text-xs">{c.assigned_school}</td>
+                                                            <td className="px-4 py-3">
+                                                                <span className="bg-brand-50 text-brand-600 px-2 py-1 rounded-lg font-bold text-xs">{c.access_code}</span>
+                                                            </td>
+                                                            <td className="px-4 py-3 text-right space-x-3">
+                                                                <button onClick={() => openCounselorModal(c)} className="text-brand-600 hover:text-brand-700 transition-colors"><Edit3 size={16} /></button>
+                                                                <button onClick={() => handleDeleteCounselor(c.id)} className="text-red-500 hover:text-red-700 transition-colors"><Trash2 size={16} /></button>
+                                                            </td>
+                                                        </motion.tr>
+                                                    ))}
+                                                </AnimatePresence>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                    )}
-                </div>
-            </div>
 
-            {/* Counselor Modal */}
+                        {/* Counselor Modal */}
             {showCounselorModal && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
                     <motion.div
