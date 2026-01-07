@@ -59,7 +59,7 @@ const GoogleMeetCounseling = () => {
     useEffect(() => {
         const fetchCounselors = async () => {
             try {
-                const response = await api.get('/api/counselors');
+                const response = await api.get('/counselors');
                 const data = response.data;
 
                 // Filter by school name from localStorage
@@ -226,8 +226,8 @@ const GoogleMeetCounseling = () => {
     return (
         <div className="min-h-screen bg-slate-50 py-12 px-4 selection:bg-brand-100">
             <div className="max-w-4xl mx-auto">
-                <CustomButton variant="ghost" onClick={() => navigate("/dashboard/high")} className="mb-8">
-                    <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
+                <CustomButton variant="ghost" onClick={() => navigate(-1)} className="mb-8">
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Back
                 </CustomButton>
 
                 <motion.div
@@ -317,7 +317,7 @@ const GoogleMeetCounseling = () => {
                             </div>
                             <CustomButton
                                 onClick={handleSubmit}
-                                disabled={!formData.counselorId || !counselorAvailability[formData.counselorId] || loading}
+                                disabled={!formData.counselorId || loading}
                                 size="lg"
                                 className="w-full md:w-auto !rounded-2xl relative z-10"
                             >

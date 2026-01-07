@@ -605,12 +605,12 @@ app.post('/api/triage', authenticateToken, authorizeRoles('student'), async (req
 
 
 
-app.post('/api/start-session', authenticateToken, authorizeRoles('counsellor', 'admin'), (req, res) => {
+app.post('/api/start-session', authenticateToken, authorizeRoles('student', 'counsellor', 'admin'), (req, res) => {
     // Session tracking moved to Database/Realtime notification flow
     res.json({ success: true });
 });
 
-app.post('/api/send-meeting-link', authenticateToken, authorizeRoles('counsellor', 'admin'), async (req, res) => {
+app.post('/api/send-meeting-link', authenticateToken, authorizeRoles('student', 'counsellor', 'admin'), async (req, res) => {
     const { studentEmail, counselorEmail, counselorName, date, time, meetLink } = req.body;
 
     try {

@@ -85,7 +85,14 @@ const ModerateRiskDashboard = () => {
                         </div>
                         <span className="font-bold text-slate-900">Pendo AI</span>
                     </div>
-                    <div className="w-20"></div> {/* Spacer for symmetry */}
+                    <CustomButton
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => navigate("/book-counselling")}
+                        className="text-brand-600 border-brand-100 hover:bg-brand-50"
+                    >
+                        Talk to a Professional
+                    </CustomButton>
                 </div>
 
                 {/* Chatbot Section */}
@@ -125,8 +132,8 @@ const ModerateRiskDashboard = () => {
                                     </div>
                                     <div
                                         className={`px-5 py-3.5 rounded-2xl text-base leading-relaxed ${msg.sender === "user"
-                                                ? "bg-brand-600 text-white rounded-tr-none shadow-lg shadow-brand-100"
-                                                : "bg-white text-slate-700 rounded-tl-none border border-slate-100 shadow-soft"
+                                            ? "bg-brand-600 text-white rounded-tr-none shadow-lg shadow-brand-100"
+                                            : "bg-white text-slate-700 rounded-tl-none border border-slate-100 shadow-soft"
                                             }`}
                                     >
                                         {msg.text}
