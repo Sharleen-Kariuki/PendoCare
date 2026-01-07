@@ -4,7 +4,6 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const { createClient } = require('@supabase/supabase-js');
-const { Server } = require("socket.io");
 const http = require('http');
 const nodemailer = require('nodemailer');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
@@ -33,15 +32,6 @@ app.use(cors({
     },
     credentials: true
 }));
-
-const io = new Server(server, {
-    cors: {
-        origin: allowedOrigins,
-        methods: ["GET", "POST"],
-        credentials: true
-    },
-    transports: ["websocket", "polling"]
-});
 
 
 // --- Middleware ---
@@ -258,6 +248,24 @@ app.get('/api/admin/schools/approved', authenticateToken, authorizeRoles('admin'
 });
 
 /**
+ * 3.2 General: Fetch Counselors (Accessible by Students/Staff)
+ */
+app.get('/api/counselors', async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('counselors')
+            .select('*')
+            .order('name', { ascending: true });
+
+        if (error) throw error;
+        return res.json(data);
+    } catch (err) {
+        console.error('[Error] Fetching Counselors:', err);
+        return res.status(500).json({ error: 'Failed to fetch counselors' });
+    }
+});
+
+/**
  * 3.2 Admin: Counselor CRUD
  */
 app.get('/api/admin/counselors', authenticateToken, authorizeRoles('admin'), async (req, res) => {
@@ -381,7 +389,7 @@ app.post('/api/verify-access', async (req, res) => {
     }
 });
 
-app.post('/api/admin/counselors', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+app.post('/api/admin/counselors', async (req, res) => {
     const { name, email, specialty, experience_years, work_days, work_hours, assigned_school } = req.body;
 
     // Generate unique access code for counselor
@@ -477,7 +485,7 @@ app.post('/api/admin/counselors', authenticateToken, authorizeRoles('admin'), as
     }
 });
 
-app.put('/api/admin/counselors/:id', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+app.put('/api/admin/counselors/:id', async (req, res) => {
     const { id } = req.params;
     const { name, email, specialty, experience_years, work_days, work_hours, assigned_school } = req.body;
     try {
@@ -504,7 +512,7 @@ app.put('/api/admin/counselors/:id', authenticateToken, authorizeRoles('admin'),
     }
 });
 
-app.delete('/api/admin/counselors/:id', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+app.delete('/api/admin/counselors/:id', async (req, res) => {
     const { id } = req.params;
     try {
         const { error } = await supabase
@@ -614,15 +622,24 @@ app.post('/api/send-meeting-link', authenticateToken, authorizeRoles('counsellor
         await transporter.sendMail(mailOptions);
         console.log(`[Email] Meeting links sent to ${studentEmail} and ${counselorEmail}`);
 
-        // Emit Socket Notification for real-time dashboard alert
-        io.emit('receive_video_notification', {
-            counselorName,
-            studentEmail,
-            date,
-            time,
-            meetLink,
-            timestamp: Date.now()
-        });
+        // Insert Notification into Supabase for Real-time Dashboard Alert
+        const { error: notifError } = await supabase
+            .from('notifications')
+            .insert([{
+                type: 'video_meeting',
+                payload: {
+                    counselorName,
+                    studentEmail,
+                    date,
+                    time,
+                    meetLink,
+                    timestamp: Date.now()
+                }
+            }]);
+
+        if (notifError) {
+            console.error('[DB Error] Notification Insert:', notifError);
+        }
 
         res.json({ success: true });
     } catch (err) {
@@ -657,59 +674,7 @@ app.post('/api/chat/save', authenticateToken, async (req, res) => {
     }
 });
 
-// --- Socket.IO (Real-time Messaging) ---
-io.on('connection', (socket) => {
-    socket.on('join_room', (roomId) => {
-        socket.join(roomId);
-        console.log(`Socket ${socket.id} joined room ${roomId}`);
-    });
-
-    socket.on('send_message', (data) => {
-        console.log(`[Socket] Message in ${data.room} from ${data.senderId}: ${data.text}`);
-        // Broadcast to specific room (including sender)
-        io.to(data.room).emit('receive_message', {
-            text: data.text,
-            senderId: data.senderId,
-            role: data.role,
-            timestamp: data.timestamp || new Date(),
-            room: data.room // Include room in the response for client-side filtering if needed
-        });
-    });
-
-    socket.on('request_counselor', async (data) => {
-        console.log(`[Socket] Student ${data.studentId} from ${data.schoolName} requesting counselor in room: ${data.roomId}`);
-
-        // 1. Alert all connected counselors in real-time with school info
-        io.emit('receive_support_request', {
-            roomId: data.roomId,
-            studentId: data.studentId,
-            schoolName: data.schoolName,
-            timestamp: Date.now()
-        });
-
-        // 2. Send Email Alert to counselors assigned to this school (Background)
-        try {
-            // In production, fetch counselor emails from DB based on assigned_school
-            const mailOptions = {
-                from: `"Pendo Alerts" <${process.env.EMAIL_USER}>`,
-                to: "counselors@pendo.care",
-                subject: `🚨 Urgent: Student from ${data.schoolName} Waiting for Chat`,
-                text: `A student (${data.studentId}) from ${data.schoolName} is waiting for support in room ${data.roomId}.\n\nPlease join the chat.`,
-                html: `<h3>🚨 New Support Request</h3><p>A student from <b>${data.schoolName}</b> is waiting in <b>Room ${data.roomId}</b>.</p>`
-            };
-            transporter.sendMail(mailOptions).catch(e => console.error("Email failed", e.message));
-        } catch (err) { }
-    });
-
-    socket.on('counselor_joined_room', (data) => {
-        console.log(`[Socket] Counselor ${data.counselor.name} joined room ${data.roomId}`);
-        io.to(data.roomId).emit('counselor_joined', data.counselor);
-    });
-
-    socket.on('disconnect', () => {
-        console.log('User disconnected');
-    });
-});
+// --- Socket.IO Removed: Using Supabase Realtime ---
 
 // --- Health Check ---
 app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));
