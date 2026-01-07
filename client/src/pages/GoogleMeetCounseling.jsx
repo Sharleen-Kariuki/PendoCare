@@ -117,13 +117,13 @@ const GoogleMeetCounseling = () => {
 
         try {
             // API calls to backend
-            await api.post('/start-session', {
+            await api.post('/api/start-session', {
                 counselorId: formData.counselorId,
                 studentEmail: schoolEmail,
                 endTime
             });
 
-            await api.post('/send-meeting-link', {
+            await api.post('/api/send-meeting-link', {
                 studentEmail: schoolEmail,
                 counselorEmail: counselor.email,
                 counselorName: counselor.name,
