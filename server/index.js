@@ -200,11 +200,11 @@ app.post('/api/admin/approve/:id', authenticateToken, authorizeRoles('admin'), a
             console.log(`[Email] Sent access code to ${request.school_email}`);
             emailSent = true;
         } catch (mailErr) {
-    console.error('[Email Error] Full Error Object:', mailErr);  // ← ADD THIS
-    console.error('[Email Error] Message:', mailErr.message);
-    console.error('[Email Error] Code:', mailErr.code);  // ← ADD THIS
-    // We don't throw here so the user still gets the "Approved" feedback
-}
+            console.error('[Email Error] Full Error Object:', mailErr);  // ← ADD THIS
+            console.error('[Email Error] Message:', mailErr.message);
+            console.error('[Email Error] Code:', mailErr.code);  // ← ADD THIS
+            // We don't throw here so the user still gets the "Approved" feedback
+        }
 
         return res.json({
             message: emailSent ? 'Approved and email sent' : 'Approved (Email failed to send)',
@@ -714,6 +714,57 @@ app.post('/api/chat/save', authenticateToken, async (req, res) => {
 
 // --- Health Check ---
 app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));
+
+/**
+ * 7. Test Email Endpoint (Public for debugging)
+ */
+app.get('/api/test-email', async (req, res) => {
+    const testEmail = req.query.email || process.env.EMAIL_USER;
+
+    try {
+        console.log(`[Email] Running manual SMTP test to: ${testEmail}`);
+        const mailOptions = {
+            from: `"Pendo Test" <${process.env.EMAIL_USER}>`,
+            to: testEmail,
+            subject: "Pendo SMTP Configuration Test",
+            text: "If you are reading this, your Pendo backend is correctly configured to send emails!",
+            html: `
+                <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                    <h2 style="color: #008069;">✓ Email System Working</h2>
+                    <p>Your SMTP settings are correct.</p>
+                    <hr/>
+                    <p style="font-size: 12px; color: #666;">
+                        Host: ${process.env.EMAIL_HOST}<br>
+                        Port: ${process.env.EMAIL_PORT}<br>
+                        User: ${process.env.EMAIL_USER}
+                    </p>
+                </div>
+            `
+        };
+
+        const info = await transporter.sendMail(mailOptions);
+        console.log(`[Email Test Success] Message ID: ${info.messageId}`);
+        res.json({
+            success: true,
+            message: `Test email sent to ${testEmail}`,
+            messageId: info.messageId,
+            configUsed: {
+                host: process.env.EMAIL_HOST,
+                user: process.env.EMAIL_USER,
+                port: process.env.EMAIL_PORT
+            }
+        });
+    } catch (err) {
+        console.error('[Email Test Failed] Error details:', err);
+        res.status(500).json({
+            success: false,
+            error: err.message,
+            code: err.code,
+            command: err.command,
+            hint: "Check your Render Environment Variables (EMAIL_USER and EMAIL_PASS)"
+        });
+    }
+});
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
