@@ -59,13 +59,14 @@ const model = genAI.getGenerativeModel({
 const transporter = nodemailer.createTransport({
     host: process.env.EMAIL_HOST,
     port: process.env.EMAIL_PORT,
-    secure: false,
+    // SMART FIX: If port is 465, use true. If 587, use false.
+    secure: process.env.EMAIL_PORT == 465, 
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
     },
     tls: {
-        rejectUnauthorized: false  // For Gmail
+        rejectUnauthorized: false 
     }
 });
 transporter.verify(function (error, success) {
