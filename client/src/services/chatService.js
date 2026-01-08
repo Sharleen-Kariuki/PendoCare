@@ -193,3 +193,70 @@ export function subscribeToNotifications(onNotification) {
         )
         .subscribe();
 }
+
+export async function fetchNotifications(counselorEmail, counselorId) {
+    // Build the OR filter to include email, ID, and generic counsellor notifications
+    const filters = [
+        `recipient_role.eq.counsellor`,
+        `recipient_role.is.null`
+    ];
+
+    if (counselorEmail) {
+        filters.push(`recipient_role.eq.${counselorEmail}`);
+    }
+
+    if (counselorId) {
+        filters.push(`recipient_role.eq.${counselorId}`);
+    }
+
+    const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('type', 'video_meeting')
+        .or(filters.join(','))
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+    if (error) {
+        console.error('Error fetching notifications:', error);
+        return [];
+    }
+    return data;
+}
+
+export async function requestVideoSession(studentId, roomId, targetDetails = {}) {
+    // targetDetails can contain counselorId or email if known
+    // If we have a specific target, we try to use it, otherwise 'counsellor' (broadcast)
+
+    const meetLink = `https://meet.jit.si/pendo-${roomId}`; // Using Jitsi for instant rooms, or could be Google Meet
+
+    const payload = {
+        studentEmail: studentId, // Using ID as display name/email
+        studentName: studentId,
+        meetLink: meetLink,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        roomId: roomId
+    };
+
+    // Determine recipient
+    // If we have a specific target ID, we can put it in recipient_role
+    // The CounselorDashboard logic needs to updated to check ID too.
+    const recipient = targetDetails.counsellorId || 'counsellor';
+
+    const { error } = await supabase
+        .from('notifications')
+        .insert([{
+            type: 'video_meeting',
+            recipient_role: recipient,
+            payload: payload,
+            is_read: false
+        }]);
+
+    if (error) {
+        console.error('Error requesting video session:', error);
+        return false;
+    }
+    return true;
+}
+
+

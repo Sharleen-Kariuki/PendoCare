@@ -5,7 +5,6 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const { createClient } = require('@supabase/supabase-js');
 const http = require('http');
-const nodemailer = require('nodemailer');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const jwt = require('jsonwebtoken');
 
@@ -55,27 +54,6 @@ const model = genAI.getGenerativeModel({
     If a user mentions self-harm or suicide, you MUST output the exact code [[ESCALATE_TO_HUMAN]] and encourage them to speak to a counsellor.`
 });
 
-// --- Email Transporter ---
-const transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: process.env.EMAIL_PORT,
-    // SMART FIX: If port is 465, use true. If 587, use false.
-    secure: process.env.EMAIL_PORT == 465, 
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-    },
-    tls: {
-        rejectUnauthorized: false 
-    }
-});
-transporter.verify(function (error, success) {
-    if (error) {
-        console.error('[Email] Configuration Error:', error);
-    } else {
-        console.log('[Email] Server is ready to send emails ✓');
-    }
-});
 // --- Auth Middlewares ---
 
 const authenticateToken = (req, res, next) => {
@@ -186,31 +164,9 @@ app.post('/api/admin/approve/:id', authenticateToken, authorizeRoles('admin'), a
 
         if (updateErr) throw updateErr;
 
-        // 3. Send Email (Attempt, don't block if it fails)
-        let emailSent = false;
-        try {
-            const mailOptions = {
-                from: `"Pendo Admin" <${process.env.EMAIL_USER}>`,
-                to: request.school_email,
-                subject: "Pendo Platform Access Approved",
-                text: `Hello ${request.contact_person},\n\nYour school's access to Pendo has been approved. \n\nYour Access Code: ${accessCode}\n\nShare this with your students to begin.`,
-                html: `<h3>Welcome to Pendo</h3><p>Your Access Code is: <b>${accessCode}</b></p>`
-            };
-
-            await transporter.sendMail(mailOptions);
-            console.log(`[Email] Sent access code to ${request.school_email}`);
-            emailSent = true;
-        } catch (mailErr) {
-            console.error('[Email Error] Full Error Object:', mailErr);  // ← ADD THIS
-            console.error('[Email Error] Message:', mailErr.message);
-            console.error('[Email Error] Code:', mailErr.code);  // ← ADD THIS
-            // We don't throw here so the user still gets the "Approved" feedback
-        }
-
         return res.json({
-            message: emailSent ? 'Approved and email sent' : 'Approved (Email failed to send)',
-            accessCode,
-            emailSent
+            message: 'Approved',
+            accessCode
         });
     } catch (err) {
         console.error('[Error] Approval Flow:', err);
@@ -438,54 +394,8 @@ app.post('/api/admin/counselors', async (req, res) => {
 
         console.log('[Success] Counselor created:', data[0]);
 
-        // Send email with access code
-        let emailSent = false;
-        try {
-            const mailOptions = {
-                from: `"Pendo Admin" <${process.env.EMAIL_USER}>`,
-                to: email,
-                subject: "Welcome to Pendo - Your Counselor Access Code",
-                text: `Hello ${name},\n\nWelcome to the Pendo platform! You have been registered as a counselor.\n\nYour Access Code: ${accessCode}\n\nAssigned School: ${assigned_school || 'Not assigned yet'}\nSpecialty: ${specialty || 'General'}\nWork Days: ${work_days || 'Not specified'}\nWork Hours: ${work_hours || 'Not specified'}\n\nPlease use this access code to log in to your counselor dashboard.\n\nBest regards,\nPendo Team`,
-                html: `
-                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                        <h2 style="color: #008069;">Welcome to Pendo!</h2>
-                        <p>Hello <strong>${name}</strong>,</p>
-                        <p>You have been registered as a counselor on the Pendo mental health platform.</p>
-                        
-                        <div style="background: #f0f9ff; border-left: 4px solid #008069; padding: 16px; margin: 20px 0;">
-                            <h3 style="margin-top: 0; color: #008069;">Your Access Code</h3>
-                            <p style="font-size: 24px; font-weight: bold; color: #008069; margin: 10px 0;">${accessCode}</p>
-                        </div>
-                        
-                        <div style="background: #f8fafc; padding: 16px; border-radius: 8px; margin: 20px 0;">
-                            <h4 style="margin-top: 0;">Your Profile Details:</h4>
-                            <p><strong>Assigned School:</strong> ${assigned_school || 'Not assigned yet'}</p>
-                            <p><strong>Specialty:</strong> ${specialty || 'General'}</p>
-                            <p><strong>Work Days:</strong> ${work_days || 'Not specified'}</p>
-                            <p><strong>Work Hours:</strong> ${work_hours || 'Not specified'}</p>
-                        </div>
-                        
-                        <p>Please use this access code to log in to your counselor dashboard and start supporting students.</p>
-                        
-                        <p style="margin-top: 30px; color: #64748b; font-size: 14px;">
-                            Best regards,<br>
-                            <strong>Pendo Team</strong>
-                        </p>
-                    </div>
-                `
-            };
-
-            await transporter.sendMail(mailOptions);
-            console.log(`[Email] Sent access code to ${email}`);
-            emailSent = true;
-        } catch (mailErr) {
-            console.error('[Email Error] Failed to send counselor access code:', mailErr.message);
-            // Don't fail the request if email fails
-        }
-
         return res.status(201).json({
-            ...data[0],
-            emailSent
+            ...data[0]
         });
     } catch (err) {
         console.error('[Error] Creating Counselor:', err);
@@ -624,48 +534,17 @@ app.post('/api/start-session', authenticateToken, authorizeRoles('student', 'cou
 
 app.post('/api/send-meeting-link', authenticateToken, authorizeRoles('student', 'counsellor', 'admin'), async (req, res) => {
     // 1. Extract Data
-    const { studentEmail, counselorEmail, counselorName, date, time, meetLink } = req.body;
+    const { studentEmail, counselorId, counselorEmail, counselorName, date, time, meetLink } = req.body;
 
-    console.log(`[Meeting] Request to notify: Counselor (${counselorEmail}) about Student (${studentEmail})`);
+    console.log(`[Meeting] Request to notify: Counselor (${counselorName} - ${counselorEmail}) about Student (${studentEmail})`);
 
     try {
-        // 2. CHECK: Does the counselor actually have an email?
-        if (!counselorEmail || !counselorEmail.includes('@')) {
-            console.log("[Meeting] Skipped email: Invalid counselor email address.");
-            return res.json({ success: true, message: "Session created, but counselor had no email." });
-        }
-
-        // 3. FIX: Only send email to the Counselor (Ignore the fake student email)
-        const mailOptions = {
-            from: `"Pendo Counseling" <${process.env.EMAIL_USER}>`,
-            to: counselorEmail, // <--- CHANGE: Only sending to Counselor
-            subject: "Pendo Counseling: New Session Booked",
-            text: `Hello ${counselorName},\n\nA student (${studentEmail}) has started a session.\n\nJoin here: ${meetLink}`,
-            html: `
-                <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-                    <h2 style="color: #008069;">New Session Alert</h2>
-                    <p>Hello <strong>${counselorName}</strong>,</p>
-                    <p>A student has requested a video session immediately.</p>
-                    
-                    <div style="background: #f0fdfa; padding: 15px; margin: 20px 0; border-radius: 8px;">
-                        <p><strong>Student:</strong> ${studentEmail}</p>
-                        <p><strong>Date:</strong> ${date}</p>
-                        <p><strong>Time:</strong> ${time}</p>
-                    </div>
-
-                    <a href="${meetLink}" style="display:inline-block; padding:12px 24px; background:#008069; color:white; text-decoration:none; border-radius:8px; font-weight:bold;">Join Meeting Room</a>
-                </div>
-            `
-        };
-
-        await transporter.sendMail(mailOptions);
-        console.log(`[Email] Meeting link sent to Counselor: ${counselorEmail}`);
-
-        // 4. Save Notification to Database (Keep this)
+        // 3. Save Notification for the Counselor Dashboard
         const { error: notifError } = await supabase
             .from('notifications')
             .insert([{
                 type: 'video_meeting',
+                recipient_role: counselorId || counselorEmail, // Prefer ID for targeting, fallback to email
                 payload: {
                     counselorName,
                     studentEmail,
@@ -680,9 +559,8 @@ app.post('/api/send-meeting-link', authenticateToken, authorizeRoles('student', 
 
         res.json({ success: true });
     } catch (err) {
-        console.error('[Email Error] Failed to send meeting link:', err);
-        // We still return 200 success so the student isn't blocked from the video call
-        res.status(200).json({ success: true, warning: "Email failed but session started" });
+        console.error('[Meeting Error] Failed to process meeting request:', err);
+        res.status(500).json({ error: 'Failed to process meeting' });
     }
 });
 /**
@@ -715,57 +593,6 @@ app.post('/api/chat/save', authenticateToken, async (req, res) => {
 
 // --- Health Check ---
 app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));
-
-/**
- * 7. Test Email Endpoint (Public for debugging)
- */
-app.get('/api/test-email', async (req, res) => {
-    const testEmail = req.query.email || process.env.EMAIL_USER;
-
-    try {
-        console.log(`[Email] Running manual SMTP test to: ${testEmail}`);
-        const mailOptions = {
-            from: `"Pendo Test" <${process.env.EMAIL_USER}>`,
-            to: testEmail,
-            subject: "Pendo SMTP Configuration Test",
-            text: "If you are reading this, your Pendo backend is correctly configured to send emails!",
-            html: `
-                <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-                    <h2 style="color: #008069;">✓ Email System Working</h2>
-                    <p>Your SMTP settings are correct.</p>
-                    <hr/>
-                    <p style="font-size: 12px; color: #666;">
-                        Host: ${process.env.EMAIL_HOST}<br>
-                        Port: ${process.env.EMAIL_PORT}<br>
-                        User: ${process.env.EMAIL_USER}
-                    </p>
-                </div>
-            `
-        };
-
-        const info = await transporter.sendMail(mailOptions);
-        console.log(`[Email Test Success] Message ID: ${info.messageId}`);
-        res.json({
-            success: true,
-            message: `Test email sent to ${testEmail}`,
-            messageId: info.messageId,
-            configUsed: {
-                host: process.env.EMAIL_HOST,
-                user: process.env.EMAIL_USER,
-                port: process.env.EMAIL_PORT
-            }
-        });
-    } catch (err) {
-        console.error('[Email Test Failed] Error details:', err);
-        res.status(500).json({
-            success: false,
-            error: err.message,
-            code: err.code,
-            command: err.command,
-            hint: "Check your Render Environment Variables (EMAIL_USER and EMAIL_PASS)"
-        });
-    }
-});
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {

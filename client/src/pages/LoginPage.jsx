@@ -34,6 +34,8 @@ const LoginPage = () => {
                 localStorage.setItem('school_name', school);
             } else {
                 localStorage.setItem('user_name', user?.name || 'User');
+                if (user?.id) localStorage.setItem('user_id', user.id);
+                if (user?.email) localStorage.setItem('user_email', user.email);
             }
 
             // Success Redirect

@@ -125,6 +125,7 @@ const GoogleMeetCounseling = () => {
 
             await api.post('/api/send-meeting-link', {
                 studentEmail: schoolEmail,
+                counselorId: counselor.id, // Pass ID for better targeting
                 counselorEmail: counselor.email,
                 counselorName: counselor.name,
                 date: formData.date,

@@ -40,12 +40,26 @@ const ChatInterface = () => {
                 const conv = await getOrCreateConversation(studentCode);
 
                 if (conv) {
+                    if (conv.risk_level === 'completed') {
+                        localStorage.clear();
+                        navigate('/login');
+                        return;
+                    }
                     setConversation(conv);
                     setMessages(parseConversationLog(conv.content));
 
                     // Subscribe to Realtime Updates
                     subscription = subscribeToConversation(conv.id, (updatedConv) => {
                         console.log("[Realtime] Update:", updatedConv);
+
+                        // If session is completed by counsellor, redirect to login
+                        if (updatedConv.risk_level === 'completed') {
+                            alert("This support session has ended. You will be returned to the login page.");
+                            localStorage.clear(); // Clear all session data
+                            window.location.href = '/login'; // Force a full page refresh/redirect
+                            return;
+                        }
+
                         setConversation(updatedConv);
                         setMessages(parseConversationLog(updatedConv.content));
                     });
@@ -88,6 +102,11 @@ const ChatInterface = () => {
     // Determine Counsellor Status
     const isCounsellorConnected = !!conversation?.counsellor_id;
 
+    const handleVideoRequest = () => {
+        // Redirect to the dedicated Google Meet booking page
+        navigate('/book-counselling');
+    };
+
     return (
         <div className="min-h-screen bg-[#E5DDD5] flex flex-col relative overflow-hidden">
             {/* WhatsApp-style Background Pattern Overlay */}
@@ -113,7 +132,7 @@ const ChatInterface = () => {
                 </div>
 
                 <div className="flex items-center gap-4 text-white/80">
-                    <Video size={24} className="cursor-pointer hover:text-white" />
+                    <Video size={24} className="cursor-pointer hover:text-white" onClick={handleVideoRequest} />
                     <Phone size={22} className="cursor-pointer hover:text-white" />
                     <MoreVertical size={22} className="cursor-pointer hover:text-white" />
                 </div>

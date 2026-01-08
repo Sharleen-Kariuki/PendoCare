@@ -27,26 +27,12 @@ When the admin submits the form:
 2. Code is stored in the `counselors` table with `UNIQUE` constraint
 3. Counselor record is created in the database
 
-### 3. Email Notification
-An automated email is sent to the counselor containing:
-- Welcome message
-- **Access Code** (prominently displayed)
-- Profile details (school, specialty, work schedule)
-- Instructions for accessing the dashboard
-
-**Email Template Features**:
-- Professional HTML formatting
-- Branded colors (#008069 - Pendo brand color)
-- Clear access code display
-- Profile summary
-- Call-to-action for dashboard access
-
-### 4. Admin Confirmation
+### 3. Admin Confirmation
 After successful registration:
 - Admin sees a success alert with the access code
-- Email delivery status is shown
 - Access code is displayed in the counselors table
-- Admin can reference the code later if needed
+- Admin can reference the code and share it manually with the counselor
+
 
 ## Database Schema
 
@@ -73,7 +59,7 @@ CREATE INDEX idx_counselors_access_code ON counselors(access_code);
 ## API Endpoints
 
 ### POST `/api/admin/counselors`
-Creates a new counselor and sends access code via email.
+Creates a new counselor and returns their access code.
 
 **Request Body**:
 ```json
@@ -100,32 +86,9 @@ Creates a new counselor and sends access code via email.
   "work_hours": "9am-5pm",
   "assigned_school": "Nairobi High School",
   "access_code": "CNSL-4729",
-  "emailSent": true,
   "created_at": "2026-01-02T19:38:00Z"
 }
 ```
-
-## Email Configuration
-
-The system uses Nodemailer with the following configuration:
-
-```javascript
-const transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: process.env.EMAIL_PORT,
-    secure: process.env.EMAIL_PORT == 465,
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-    },
-});
-```
-
-**Required Environment Variables**:
-- `EMAIL_HOST` - SMTP server host
-- `EMAIL_PORT` - SMTP port (465 for SSL, 587 for TLS)
-- `EMAIL_USER` - SMTP username
-- `EMAIL_PASS` - SMTP password
 
 ## Security Considerations
 
@@ -154,13 +117,6 @@ The access code will be used for:
 
 ## Troubleshooting
 
-### Email Not Sent
-If the email fails to send:
-- Counselor is still created successfully
-- Admin sees "Email failed to send" in the alert
-- Access code is displayed to admin for manual sharing
-- Check server logs for email error details
-
 ### Duplicate Access Code
 Extremely rare due to 9000 possible combinations, but if it occurs:
 - Database constraint prevents duplicate
@@ -186,15 +142,12 @@ If a counselor loses their access code:
 
 ### Expected Outcomes
 - ✅ Unique access code generated
-- ✅ Email sent to counselor
 - ✅ Access code displayed to admin
 - ✅ Counselor appears in table with code
-- ✅ Email contains all profile details
 
 ## Support
 
 For issues or questions about the counselor access code system:
 - Check server logs: `c:\Users\USER\OneDrive\Desktop\Antigravity\pendocare\server\`
-- Review email configuration in `.env` file
 - Verify Supabase table schema matches documentation
 - Contact system administrator

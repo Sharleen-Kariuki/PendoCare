@@ -8,20 +8,26 @@ import {
     sendMessage,
     subscribeToConversation,
     parseConversationLog,
-    subscribeToNotifications
+    subscribeToNotifications,
+    fetchNotifications
 } from '../services/chatService';
 import {
     Video, MessageSquare, Clock, User, Phone, CheckCircle2,
     LayoutDashboard, History, Settings, LogOut, Bell,
     Search, Filter, Activity, TrendingUp, AlertCircle,
-    Paperclip, Mic, Send, MoreVertical, ShieldAlert, CheckCheck, ArrowLeft
+    Paperclip, Mic, Send, MoreVertical, ShieldAlert, CheckCheck, ArrowLeft, X
 } from 'lucide-react';
 import { motion, AnimatePresence } from "framer-motion";
 
 const CounsellorDashboard = () => {
     const navigate = useNavigate();
     const counselorName = localStorage.getItem('user_name') || 'Counsellor';
-    const counselorId = localStorage.getItem('user_id') || 'counselor_01'; // Ideally actual ID
+    const counselorId = localStorage.getItem('user_id') || 'counselor_01';
+    const counselorEmail = localStorage.getItem('user_email');
+
+    if (!counselorEmail && localStorage.getItem('auth_token')) {
+        console.error("[Auth Warning] Counselor email is missing from localStorage. Please log out and log in again.");
+    }
 
     const handleLogout = () => {
         localStorage.removeItem('auth_token');
@@ -35,6 +41,7 @@ const CounsellorDashboard = () => {
     const [activeSessions, setActiveSessions] = useState([]);
     const [activeNav, setActiveNav] = useState('dashboard');
     const [videoNotifications, setVideoNotifications] = useState([]);
+    const [showNotifications, setShowNotifications] = useState(false);
 
     // 1. Listen for Queue Updates & Notifications (Supabase Realtime)
     useEffect(() => {
@@ -70,6 +77,12 @@ const CounsellorDashboard = () => {
                 })));
             }
 
+            // Initial Notifications Load
+            if (counselorEmail) {
+                const existingNotifs = await fetchNotifications(counselorEmail, counselorId);
+                setVideoNotifications(existingNotifs.map(n => n.payload));
+            }
+
             // Subscribe to Queue
             queueSub = subscribeToQueue((newReq) => {
                 setIncomingRequests(prev => {
@@ -102,9 +115,27 @@ const CounsellorDashboard = () => {
             });
 
             // Subscribe to Notifications (Video)
+            console.log("[Dashboard] Subscribing to notifications for:", counselorEmail);
             notifSub = subscribeToNotifications((item) => {
+                console.log("[Notification Received]:", item);
                 if (item.type === 'video_meeting') {
-                    setVideoNotifications(prev => [item.payload, ...prev].slice(0, 5));
+                    // Only show if it's for this specific counselor OR if it's generic but we are a counselor
+                    const isTargeted = (item.recipient_role && counselorEmail &&
+                        item.recipient_role.toLowerCase() === counselorEmail.toLowerCase()) ||
+                        (item.recipient_role === counselorId);
+                    const isGeneric = item.recipient_role === 'counsellor' || !item.recipient_role;
+
+                    if (isTargeted || isGeneric) {
+                        console.log("[Notification Accepted]:", item.payload);
+                        setVideoNotifications(prev => {
+                            // Prevent duplicates if multiple events fire
+                            const isDuplicate = prev.some(p => p.meetLink === item.payload.meetLink);
+                            if (isDuplicate) return prev;
+                            return [item.payload, ...prev].slice(0, 5);
+                        });
+
+                        // Optional: Play a sound or show a browser notification if needed later
+                    }
                 }
             });
         };
@@ -270,12 +301,93 @@ const CounsellorDashboard = () => {
                             </select>
                         </div>
 
-                        <button className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-brand-600 hover:border-brand-100 transition-all relative">
-                            <Bell size={20} />
-                            {incomingRequests.length > 0 && (
-                                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-                            )}
-                        </button>
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowNotifications(!showNotifications)}
+                                className={`p-3 rounded-2xl border transition-all relative ${showNotifications ? 'bg-brand-50 border-brand-200 text-brand-600' : 'bg-white border-slate-200 text-slate-400 hover:text-brand-600 hover:border-brand-100'
+                                    }`}
+                            >
+                                <Bell size={20} />
+                                {(incomingRequests.length + videoNotifications.length) > 0 && (
+                                    <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
+                                )}
+                            </button>
+
+                            {/* Notifications Dropdown */}
+                            <AnimatePresence>
+                                {showNotifications && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        className="absolute right-0 mt-3 w-80 bg-white rounded-3xl shadow-2xl border border-slate-100 z-50 overflow-hidden"
+                                    >
+                                        <div className="p-5 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
+                                            <h4 className="font-black text-slate-800 tracking-tight">Support Alerts</h4>
+                                            <span className="text-[10px] bg-brand-100 text-brand-600 px-2 py-0.5 rounded-full font-black uppercase">
+                                                {incomingRequests.length + videoNotifications.length} New
+                                            </span>
+                                        </div>
+                                        <div className="max-h-[400px] overflow-y-auto p-2">
+                                            {incomingRequests.length === 0 && videoNotifications.length === 0 ? (
+                                                <div className="p-10 text-center">
+                                                    <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-3 text-slate-300">
+                                                        <Bell size={20} />
+                                                    </div>
+                                                    <p className="text-xs font-bold text-slate-400">No new alerts</p>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    {/* Video Requests */}
+                                                    {videoNotifications.map((notif, i) => (
+                                                        <div key={`v-${i}`} className="p-4 hover:bg-slate-50 transition-colors rounded-2xl flex gap-3 items-start group">
+                                                            <div className="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center text-brand-600 shrink-0">
+                                                                <Video size={18} />
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-sm font-bold text-slate-800 truncate">Video Search Requested</p>
+                                                                <p className="text-xs text-slate-400 font-medium truncate">{notif.studentEmail}</p>
+                                                                <div className="flex gap-2 mt-2">
+                                                                    <a href={notif.meetLink} target="_blank" rel="noreferrer" className="text-[10px] font-black text-brand-600 uppercase hover:underline">Join Now</a>
+                                                                </div>
+                                                            </div>
+                                                            <div className="w-2 h-2 bg-brand-500 rounded-full mt-2"></div>
+                                                        </div>
+                                                    ))}
+                                                    {/* Chat Requests */}
+                                                    {incomingRequests.map((req, i) => (
+                                                        <div key={`c-${i}`} className="p-4 hover:bg-slate-50 transition-colors rounded-2xl flex gap-3 items-start group">
+                                                            <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 shrink-0">
+                                                                <MessageSquare size={18} />
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-sm font-bold text-slate-800 truncate">New Chat Waiting</p>
+                                                                <p className="text-xs text-slate-400 font-medium tracking-tight truncate">Student: {req.studentId}</p>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        handleAcceptRequest(req);
+                                                                        setShowNotifications(false);
+                                                                    }}
+                                                                    className="mt-2 text-[10px] font-black text-indigo-600 uppercase hover:underline"
+                                                                >
+                                                                    Accept Chat
+                                                                </button>
+                                                            </div>
+                                                            <div className="w-2 h-2 bg-indigo-500 rounded-full mt-2"></div>
+                                                        </div>
+                                                    ))}
+                                                </>
+                                            )}
+                                        </div>
+                                        {(incomingRequests.length + videoNotifications.length) > 0 && (
+                                            <div className="p-3 bg-slate-50 border-t border-slate-100 text-center">
+                                                <button onClick={() => setShowNotifications(false)} className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-colors">Dismiss All</button>
+                                            </div>
+                                        )}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
                     </div>
                 </header>
 
@@ -388,71 +500,72 @@ const CounsellorDashboard = () => {
 
                         {/* Sidebar Column */}
                         <div className="space-y-8">
-                            {/* Video Meeting Notifications */}
-                            {videoNotifications.length > 0 && (
-                                <div className="bg-gradient-to-br from-brand-600 to-brand-700 text-white rounded-[3rem] p-8 shadow-2xl relative overflow-hidden">
-                                    <div className="flex items-center justify-between mb-6 relative z-10">
-                                        <h3 className="font-black text-xl tracking-tight flex items-center gap-3">
-                                            <Video size={24} className="animate-pulse" />
-                                            Video Sessions
-                                        </h3>
-                                        <span className="bg-white/20 px-3 py-1 rounded-full text-xs font-black">
-                                            {videoNotifications.length} New
+                            {/* Video Meeting Alerts */}
+                            <div className="bg-gradient-to-br from-indigo-600 to-brand-700 text-white rounded-[3rem] p-8 shadow-2xl relative overflow-hidden">
+                                <div className="flex items-center justify-between mb-6 relative z-10">
+                                    <h3 className="font-black text-xl tracking-tight flex items-center gap-3">
+                                        <Video size={24} className="animate-pulse" />
+                                        Video Meeting Alerts
+                                    </h3>
+                                    {videoNotifications.length > 0 && (
+                                        <span className="bg-white/20 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider">
+                                            {videoNotifications.length} Waiting
                                         </span>
-                                    </div>
+                                    )}
+                                </div>
 
-                                    <div className="space-y-3 relative z-10 max-h-96 overflow-y-auto">
-                                        <AnimatePresence>
-                                            {videoNotifications.map((notif, i) => (
-                                                <motion.div
-                                                    key={i} // Use Index as notification might be ephemeral
-                                                    initial={{ x: 20, opacity: 0 }}
-                                                    animate={{ x: 0, opacity: 1 }}
-                                                    exit={{ x: -20, opacity: 0 }}
-                                                    className="bg-white/10 backdrop-blur-xl rounded-2xl p-5 border border-white/20 hover:bg-white/20 transition-all"
-                                                >
-                                                    <div className="flex items-start justify-between mb-3">
-                                                        <div className="flex-1">
-                                                            <div className="flex items-center gap-2 mb-1">
-                                                                <User size={16} />
-                                                                <span className="font-bold text-sm">{notif.studentEmail}</span>
-                                                            </div>
-                                                            <div className="flex items-center gap-3 text-xs text-white/70 font-medium">
-                                                                <span className="flex items-center gap-1">
-                                                                    <Clock size={14} />
-                                                                    {notif.time}
-                                                                </span>
-                                                                <span>•</span>
-                                                                <span>{new Date(notif.date).toLocaleDateString()}</span>
+                                <div className="space-y-4 relative z-10 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
+                                    <AnimatePresence>
+                                        {videoNotifications.length === 0 ? (
+                                            <div className="text-center py-10 bg-white/5 rounded-3xl border border-white/10">
+                                                <p className="text-white/40 font-bold text-xs uppercase tracking-[0.2em]">No video requests</p>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                {videoNotifications.map((notif, i) => (
+                                                    <motion.div
+                                                        key={`dash-v-${i}`}
+                                                        initial={{ x: 20, opacity: 0 }}
+                                                        animate={{ x: 0, opacity: 1 }}
+                                                        className="bg-white/10 backdrop-blur-xl rounded-2xl p-5 border border-white/20 hover:bg-white/20 transition-all shadow-lg"
+                                                    >
+                                                        <div className="flex items-start justify-between mb-3">
+                                                            <div className="flex-1">
+                                                                <div className="flex items-center gap-2 mb-1">
+                                                                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                                                                    <span className="font-black text-xs uppercase tracking-wider">Incoming Call</span>
+                                                                </div>
+                                                                <p className="text-sm font-bold truncate mb-1">{notif.studentEmail}</p>
+                                                                <div className="flex items-center gap-2 text-[10px] text-white/50 font-bold">
+                                                                    <Clock size={12} /> Requested at {notif.time}
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                    <div className="flex gap-2">
-                                                        <a
-                                                            href={notif.meetLink}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="flex-1 bg-white text-brand-600 px-4 py-2.5 rounded-xl font-black text-sm text-center hover:bg-brand-50 transition-all"
-                                                        >
-                                                            Join Meeting →
-                                                        </a>
-                                                        <button
-                                                            onClick={() => {
-                                                                setVideoNotifications(prev => prev.filter((_, idx) => idx !== i));
-                                                            }}
-                                                            className="bg-red-500/20 text-white px-3 py-2.5 rounded-xl hover:bg-red-500/40 transition-all"
-                                                            title="End/Dismiss"
-                                                        >
-                                                            <LogOut size={16} />
-                                                        </button>
-                                                    </div>
-                                                </motion.div>
-                                            ))}
-                                        </AnimatePresence>
-                                    </div>
-                                    <div className="absolute -bottom-16 -right-16 w-48 h-48 bg-white/10 rounded-full blur-3xl"></div>
+                                                        <div className="flex gap-2">
+                                                            <a
+                                                                href={notif.meetLink}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="flex-1 bg-white text-brand-600 px-4 py-2.5 rounded-xl font-black text-xs text-center hover:bg-brand-50 transition-all shadow-sm"
+                                                            >
+                                                                Join Video Session →
+                                                            </a>
+                                                            <button
+                                                                onClick={() => setVideoNotifications(prev => prev.filter((_, idx) => idx !== i))}
+                                                                className="bg-white/10 hover:bg-red-500/20 p-2.5 rounded-xl transition-all"
+                                                                title="Dismiss"
+                                                            >
+                                                                <X size={16} />
+                                                            </button>
+                                                        </div>
+                                                    </motion.div>
+                                                ))}
+                                            </>
+                                        )}
+                                    </AnimatePresence>
                                 </div>
-                            )}
+                                <div className="absolute -bottom-16 -right-16 w-48 h-48 bg-white/10 rounded-full blur-3xl opacity-20"></div>
+                            </div>
 
                             {/* System Status / Quick Log */}
                             <div className="bg-white rounded-[3rem] p-8 border border-slate-100 shadow-soft">

@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import {
     Users, School, UserPlus, Trash2, Edit3, CheckCircle,
-    XCircle, Search, LayoutDashboard, Plus, Save, X, Clock, LogOut
+    XCircle, Search, LayoutDashboard, Plus, Save, X, Clock, LogOut,
+    Mail, ExternalLink
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -67,23 +68,24 @@ const AdminDashboard = () => {
         }
     };
 
-const handleApprove = async (id) => {
-    try {
-        const response = await api.post(`/api/admin/approve/${id}`);
-        const { accessCode, emailSent } = response.data;
-        
-        if (emailSent) {
-            alert(`✅ Success!\n\nAccess Code: ${accessCode}\nEmail sent to the school.`);
-        } else {
-            alert(`⚠️ APPROVED BUT EMAIL FAILED\n\nAccess Code: ${accessCode}\n\nThe email could not be sent. Please check the server console for errors and email this code to the school manually.`);
+    const openGmail = (email, subject, body) => {
+        const url = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        window.open(url, '_blank');
+    };
+
+    const handleApprove = async (id) => {
+        try {
+            const response = await api.post(`/api/admin/approve/${id}`);
+            const { accessCode } = response.data;
+            alert(`✅ Approved!\n\nAccess Code: ${accessCode}\n\nPlease share this code with the school manually.`);
+
+
+            fetchAllData();
+        } catch (err) {
+            console.error('Full error:', err);
+            alert("Failed to approve request. Check console.");
         }
-        
-        fetchAllData();
-    } catch (err) {
-        console.error('Full error:', err);
-        alert("Failed to approve request. Check console.");
-    }
-};
+    };
 
     const handleReject = async (id) => {
         if (confirm("Reject this request?")) {
@@ -106,9 +108,8 @@ const handleApprove = async (id) => {
                 alert("Counselor updated successfully!");
             } else {
                 response = await api.post('api/admin/counselors', currentCounselor);
-                const { access_code, emailSent } = response.data;
-                const emailStatus = emailSent ? "Email sent successfully!" : "Email failed to send.";
-                alert(`✅ Counselor registered successfully!\n\nAccess Code: ${access_code}\n\n${emailStatus}\n\nThe counselor can use this code to access their dashboard.`);
+                const { access_code } = response.data;
+                alert(`✅ Counselor registered successfully!\n\nAccess Code: ${access_code}\n\nThe counselor can use this code to access their dashboard.`);
             }
             setShowCounselorModal(false);
             fetchAllData();
@@ -262,7 +263,20 @@ const handleApprove = async (id) => {
                                                 <td className="px-4 py-3 text-slate-500 font-medium text-xs">{r.contact_person}</td>
                                                 <td className="px-4 py-3 text-slate-500 font-medium text-xs">{r.school_email}</td>
                                                 <td className="px-4 py-3">
-                                                    <span className="bg-brand-50 text-brand-600 px-2 py-1 rounded-lg font-bold text-xs font-mono">{r.access_code}</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="bg-brand-50 text-brand-600 px-2 py-1 rounded-lg font-bold text-xs font-mono">{r.access_code}</span>
+                                                        <button
+                                                            onClick={() => openGmail(
+                                                                r.school_email,
+                                                                "Pendo Platform Access Approved",
+                                                                `Hello ${r.contact_person},\n\nYour school's access to Pendo has been approved.\n\nYour Access Code: ${r.access_code}\n\nBest regards,\nPendo Team`
+                                                            )}
+                                                            className="text-brand-600 hover:text-brand-700 p-1"
+                                                            title="Send via Gmail"
+                                                        >
+                                                            <Mail size={14} />
+                                                        </button>
+                                                    </div>
                                                 </td>
                                                 <td className="px-4 py-3 text-right">
                                                     <span className="bg-green-50 text-green-600 px-2 py-0.5 rounded-full font-bold text-[10px] uppercase tracking-widest">Active</span>
@@ -277,7 +291,20 @@ const handleApprove = async (id) => {
                                                 <td className="px-4 py-3 text-slate-500 font-medium text-xs">{c.email}</td>
                                                 <td className="px-4 py-3 text-slate-500 font-medium text-xs">{c.assigned_school}</td>
                                                 <td className="px-4 py-3">
-                                                    <span className="bg-brand-50 text-brand-600 px-2 py-1 rounded-lg font-bold text-xs">{c.access_code}</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="bg-brand-50 text-brand-600 px-2 py-1 rounded-lg font-bold text-xs">{c.access_code}</span>
+                                                        <button
+                                                            onClick={() => openGmail(
+                                                                c.email,
+                                                                "Welcome to Pendo - Your Counselor Access Code",
+                                                                `Hello ${c.name},\n\nWelcome to Pendo! You have been registered as a counselor.\n\nYour Access Code: ${c.access_code}\n\nBest regards,\nPendo Team`
+                                                            )}
+                                                            className="text-brand-600 hover:text-brand-700 p-1"
+                                                            title="Send via Gmail"
+                                                        >
+                                                            <Mail size={14} />
+                                                        </button>
+                                                    </div>
                                                 </td>
                                                 <td className="px-4 py-3 text-right space-x-3">
                                                     <button onClick={() => openCounselorModal(c)} className="text-brand-600 hover:text-brand-700 transition-colors"><Edit3 size={16} /></button>
