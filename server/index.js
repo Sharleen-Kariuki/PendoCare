@@ -59,13 +59,22 @@ const model = genAI.getGenerativeModel({
 const transporter = nodemailer.createTransport({
     host: process.env.EMAIL_HOST,
     port: process.env.EMAIL_PORT,
-    secure: process.env.EMAIL_PORT == 465,
+    secure: false,
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
     },
+    tls: {
+        rejectUnauthorized: false  // For Gmail
+    }
 });
-
+transporter.verify(function (error, success) {
+    if (error) {
+        console.error('[Email] Configuration Error:', error);
+    } else {
+        console.log('[Email] Server is ready to send emails ✓');
+    }
+});
 // --- Auth Middlewares ---
 
 const authenticateToken = (req, res, next) => {
@@ -191,9 +200,11 @@ app.post('/api/admin/approve/:id', authenticateToken, authorizeRoles('admin'), a
             console.log(`[Email] Sent access code to ${request.school_email}`);
             emailSent = true;
         } catch (mailErr) {
-            console.error('[Email Error] Failed to send email:', mailErr.message);
-            // We don't throw here so the user still gets the "Approved" feedback
-        }
+    console.error('[Email Error] Full Error Object:', mailErr);  // ← ADD THIS
+    console.error('[Email Error] Message:', mailErr.message);
+    console.error('[Email Error] Code:', mailErr.code);  // ← ADD THIS
+    // We don't throw here so the user still gets the "Approved" feedback
+}
 
         return res.json({
             message: emailSent ? 'Approved and email sent' : 'Approved (Email failed to send)',

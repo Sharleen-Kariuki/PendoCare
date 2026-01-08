@@ -67,16 +67,23 @@ const AdminDashboard = () => {
         }
     };
 
-    const handleApprove = async (id) => {
-        try {
-            const response = await api.post(`api/admin/approve/${id}`);
-            const { accessCode, emailSent } = response.data;
-            alert(emailSent ? `Success! Code ${accessCode} sent.` : `Approved! Code: ${accessCode}`);
-            fetchAllData();
-        } catch (err) {
-            alert("Failed to approve request.");
+const handleApprove = async (id) => {
+    try {
+        const response = await api.post(`/api/admin/approve/${id}`);
+        const { accessCode, emailSent } = response.data;
+        
+        if (emailSent) {
+            alert(`✅ Success!\n\nAccess Code: ${accessCode}\nEmail sent to the school.`);
+        } else {
+            alert(`⚠️ APPROVED BUT EMAIL FAILED\n\nAccess Code: ${accessCode}\n\nThe email could not be sent. Please check the server console for errors and email this code to the school manually.`);
         }
-    };
+        
+        fetchAllData();
+    } catch (err) {
+        console.error('Full error:', err);
+        alert("Failed to approve request. Check console.");
+    }
+};
 
     const handleReject = async (id) => {
         if (confirm("Reject this request?")) {
