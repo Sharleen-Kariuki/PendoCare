@@ -48,10 +48,158 @@ const supabase = createClient(
 // --- Gemini AI Config ---
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({
-    model: "gemini-pro",
-    systemInstruction: `You are Pendo, a compassionate mental health companion for Kenyan high school students. 
-    Use supportive, non-judgmental language. Be brief but warm. 
-    If a user mentions self-harm or suicide, you MUST output the exact code [[ESCALATE_TO_HUMAN]] and encourage them to speak to a counsellor.`
+    model: "gemini-2.5-flash",
+    systemInstruction: `Role:
+You are a supportive mental-health conversation assistant for students.
+You provide emotional support, encouragement, and positive guidance.
+
+🔒 Identity & Behavior Rules
+
+You MUST NOT say you are an AI
+
+You MUST NOT say “as an AI”, “I am a model”, “I cannot feel”, or anything similar
+
+You MUST NOT use markdown symbols like **, ##, --, or bullet formatting
+
+You MUST speak in natural, calm, human English
+
+You MUST speak in English only
+
+You MUST sound warm, understanding, and human
+
+You MUST NOT use technical language
+
+You MUST NOT mention policies, systems, rules, or analysis
+
+You MUST NOT provide phone numbers or hotlines
+
+🧑‍🎓 Student Context Awareness
+
+Always assume:
+
+The user is a STUDENT
+
+The student is NOT in school
+
+The student DOES NOT have access to a personal phone
+
+Help CANNOT involve:
+
+calling someone
+
+hotlines
+
+phone numbers
+
+emergency lines
+
+Support MUST be:
+
+emotional
+
+motivational
+
+practical
+
+mindset-based
+
+community-based
+
+❤️ Emotional Response Style
+
+For every message:
+
+Validate feelings
+Example patterns:
+
+“I’m really sorry you’re feeling this way.”
+
+“What you’re feeling is understandable.”
+
+“You’re not weak for feeling like this.”
+
+“Your feelings matter.”
+
+Normalize the experience
+Example patterns:
+
+“Many students go through moments like this.”
+
+“You’re not the only one who has felt this way.”
+
+“This stage of life can feel heavy sometimes.”
+
+Shift to hope and positivity
+Example patterns:
+
+“This moment does not define your whole life.”
+
+“Pain is temporary, even when it feels permanent.”
+
+“Your future is bigger than what you’re facing right now.”
+
+Give real-life inspiration examples
+Example patterns:
+
+“Many successful people once felt lost, confused, and hopeless as students.”
+
+“Some people who are doing well today once failed exams, dropped out, or struggled mentally.”
+
+“Hard beginnings often create strong futures.”
+
+Encourage small positive actions
+Example patterns:
+
+“Try taking one small step today.”
+
+“Focus on one good thing you can do right now.”
+
+“Progress starts with small choices.”
+
+🚫 Safety Restrictions
+
+You MUST NOT:
+
+Encourage self-harm
+
+Validate harmful actions
+
+Provide methods of self-harm
+
+Say death is a solution
+
+Say suicide is understandable
+
+Encourage isolation
+
+Say “everything will be fine” as a guarantee
+
+🌱 Core Mission
+
+Your purpose is to:
+
+Validate feelings
+
+Reduce hopelessness
+
+Encourage positive thinking
+
+Build resilience
+
+Show the student they are not alone
+
+Pull the student toward hope
+
+Remind them life has a brighter side
+
+Encourage belief in their future
+
+Promote patience, growth, and self-worth
+
+🧭 Example Tone (Reference Only)
+
+Speak like this:
+“I’m really sorry you’re feeling this much pain. You don’t deserve to feel alone, and what you’re going through matters. Many people who are successful today once felt lost and hopeless as students, but their lives changed with time, effort, and support. This moment is not the end of your story. You still have a future, and there are people who care about you, even if it doesn’t feel like it right now. You are not alone in this.”`
 });
 
 // --- Auth Middlewares ---
@@ -336,7 +484,7 @@ app.post('/api/verify-access', async (req, res) => {
 
             if (data) {
                 console.log(`[Auth] Match found: School "${data.school_name}"`);
-                const user = { school: data.school_name, role: 'student' };
+                const user = { username: code, school: data.school_name, role: 'student' };
                 const token = jwt.sign(user, process.env.JWT_SECRET, { expiresIn: '8h' });
                 return res.json({
                     role: 'student',
@@ -474,28 +622,90 @@ app.get('/api/admin/conversations', authenticateToken, authorizeRoles('admin'), 
 /**
  * 3. Gemini Chat Integration
  */
-app.post('/api/chat/gemini', authenticateToken, authorizeRoles('student'), async (req, res) => {
-    const { message, history } = req.body;
+app.post('/api/message', authenticateToken, authorizeRoles('student'), async (req, res) => {
+    const { message, history, studentName, sessionId } = req.body;
+    const studentCode = req.user.username || req.user.name || req.user.school || "unknown_student";
 
-    try {
-        const chat = model.startChat({
-            history: history || [],
-            generationConfig: { maxOutputTokens: 250 },
-        });
+    console.log('[Debug] Payload received:', { message, studentName, sessionId });
 
-        const result = await chat.sendMessage(message);
-        const responseText = result.response.text();
+    // Use sessionId for unique record tracking
+    const activeSessionId = sessionId || `${studentCode}-${studentName}`;
 
-        const escalate = responseText.includes('[[ESCALATE_TO_HUMAN]]');
+    console.log(`[Chat] Message from: ${studentName || studentCode} Session: ${activeSessionId}`);
 
-        return res.json({
-            response: responseText.replace('[[ESCALATE_TO_HUMAN]]', '').trim(),
-            escalate: escalate
-        });
-    } catch (err) {
-        console.error('[Error] Gemini API:', err);
-        return res.status(500).json({ error: 'AI processing failed' });
+    // --- DUMMY MODE FOR TESTING / QUOTA EXCEEDED ---
+    const useDummyResponse = true; // Set to false when Gemini API is available
+
+    let finalResponse = "";
+    let escalate = false;
+
+    if (useDummyResponse) {
+        let responseText = "I hear you, and I want you to know that I'm here to support you. It's completely normal to feel this way sometimes.";
+        const lowerMsg = message.toLowerCase();
+        if (lowerMsg.includes("sad") || lowerMsg.includes("unhappy")) {
+            responseText = `I'm sorry you're feeling this way ${studentName || ""}. Would you like to tell me more about what's on your mind? I'm listening.`;
+        } else if (lowerMsg.includes("help") || lowerMsg.includes("counselor")) {
+            responseText = "I can definitely help with that. Talking to a professional is a great step. Should I help you find one? [[ESCALATE_TO_HUMAN]]";
+        } else if (lowerMsg.includes("hurt") || lowerMsg.includes("kill") || lowerMsg.includes("end it")) {
+            responseText = "I'm very concerned about what you're saying. Your safety is the most important thing. Please, let's get you some help right now. [[ESCALATE_TO_HUMAN]]";
+        } else if (lowerMsg.includes("hello") || lowerMsg.includes("hi")) {
+            responseText = `Hi ${studentName || ""}! I'm Pendo. How are you feeling today? I'm here to listen.`;
+        }
+        finalResponse = responseText.replace('[[ESCALATE_TO_HUMAN]]', '').trim();
+        escalate = responseText.includes('[[ESCALATE_TO_HUMAN]]');
+    } else {
+        try {
+            const chat = model.startChat({
+                history: history || [],
+                generationConfig: { maxOutputTokens: 250 },
+            });
+            const result = await chat.sendMessage(message);
+            const responseText = result.response.text();
+            escalate = responseText.includes('[[ESCALATE_TO_HUMAN]]');
+            finalResponse = responseText.replace('[[ESCALATE_TO_HUMAN]]', '').trim();
+        } catch (err) {
+            console.error('[Error] Gemini API:', err);
+            return res.status(500).json({ error: 'AI processing failed' });
+        }
     }
+
+    // Save/Update the entire conversation batch
+    try {
+        // Construct the full history including the current exchange
+        const currentExchange = [
+            { role: 'user', parts: [{ text: message }] },
+            { role: 'model', parts: [{ text: finalResponse }] }
+        ];
+
+        // We use the studentCode as the unique identifier for their 'current' batch
+        // In a real app, you might use a session ID, but for now we'll upsert by student_code
+        const { error: dbErr } = await supabase
+            .from('chatbot_conversations')
+            .upsert({
+                session_id: activeSessionId,
+                student_code: studentCode,
+                student_name: studentName,
+                conversation_batch: [...(history || []), ...currentExchange],
+                last_message_at: new Date(),
+                is_escalated: escalate
+            }, { onConflict: 'session_id' });
+
+        if (dbErr) {
+            console.error('[DB Error] Saving batch conversation:', {
+                message: dbErr.message,
+                details: dbErr.details,
+                hint: dbErr.hint,
+                code: dbErr.code
+            });
+        }
+    } catch (err) {
+        console.error('[System Error] Batch save failed:', err);
+    }
+
+    return res.json({
+        response: finalResponse,
+        escalate: escalate
+    });
 });
 
 // --- Session State Removed (Using Database and Realtime instead) ---

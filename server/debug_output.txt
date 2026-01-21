@@ -1,0 +1,60 @@
+Checking 'chatbot_conversations' table columns...
+Columns found: id, student_code, conversation_batch, is_escalated, last_message_at, created_at, student_name
+Sample row: {
+  "id": "f2f48bfc-2b01-44e6-b39f-efa1a14dde0e",
+  "student_code": "NRB-3242",
+  "conversation_batch": [
+    {
+      "role": "user",
+      "parts": [
+        {
+          "text": "Noo"
+        }
+      ]
+    },
+    {
+      "role": "model",
+      "parts": [
+        {
+          "text": "I hear you, and I want you to know that I'm here to support you. It's completely normal to feel this way sometimes."
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "parts": [
+        {
+          "text": "Yess"
+        }
+      ]
+    },
+    {
+      "role": "model",
+      "parts": [
+        {
+          "text": "I hear you, and I want you to know that I'm here to support you. It's completely normal to feel this way sometimes."
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "parts": [
+        {
+          "text": "Hell no"
+        }
+      ]
+    },
+    {
+      "role": "model",
+      "parts": [
+        {
+          "text": "I hear you, and I want you to know that I'm here to support you. It's completely normal to feel this way sometimes."
+        }
+      ]
+    }
+  ],
+  "is_escalated": false,
+  "last_message_at": "2026-01-20T19:19:24.789+00:00",
+  "created_at": "2026-01-20T19:15:10.24816+00:00",
+  "student_name": null
+}

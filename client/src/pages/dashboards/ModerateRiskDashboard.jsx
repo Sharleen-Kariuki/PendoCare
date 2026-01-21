@@ -35,6 +35,10 @@ const ModerateRiskDashboard = () => {
         { sender: "bot", text: "Hello! I'm Pendo, your AI companion. How are you feeling today?" }
     ]);
     const [input, setInput] = useState("");
+    const [studentName, setStudentName] = useState(localStorage.getItem('student_name') || "");
+    const [sessionId, setSessionId] = useState(localStorage.getItem('chat_session_id') || "");
+    const [showNamePrompt, setShowNamePrompt] = useState(!localStorage.getItem('student_name'));
+    const [tempName, setTempName] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const scrollRef = useRef(null);
 
@@ -44,6 +48,29 @@ const ModerateRiskDashboard = () => {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
     }, [messages, isLoading]);
+
+    const handleSaveName = () => {
+        if (tempName.trim()) {
+            const newName = tempName.trim();
+            const newSessionId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+            setStudentName(newName);
+            setSessionId(newSessionId);
+
+            localStorage.setItem('student_name', newName);
+            localStorage.setItem('chat_session_id', newSessionId);
+
+            setShowNamePrompt(false);
+            setMessages([{ sender: "bot", text: `Hello ${newName}! I'm Pendo, your AI companion. How are you feeling today?` }]);
+        }
+    };
+
+    const handleEndChat = () => {
+        if (window.confirm("Are you sure you want to end this chat session? This will clear your current conversation and log you out of the portal.")) {
+            localStorage.clear();
+            navigate("/login");
+        }
+    };
 
     const handleSend = async () => {
         const trimmed = input.trim();
@@ -55,9 +82,28 @@ const ModerateRiskDashboard = () => {
         setIsLoading(true);
 
         try {
-            const botResponse = await getChatbotResponse(trimmed);
-            const botMessage = { sender: "bot", text: botResponse };
+            // Convert messages to Gemini history format, ensuring it starts with a user message
+            let history = messages.map(msg => ({
+                role: msg.sender === "user" ? "user" : "model",
+                parts: [{ text: msg.text }]
+            }));
+
+            // Gemini specific: history must start with role: user
+            if (history.length > 0 && history[0].role === 'model') {
+                history = history.slice(1);
+            }
+
+            const { response, escalate } = await getChatbotResponse(trimmed, history, studentName, sessionId);
+
+            const botMessage = { sender: "bot", text: response };
             setMessages((prev) => [...prev, botMessage]);
+
+            if (escalate) {
+                setTimeout(() => {
+                    alert("I'm concerned about what you've shared. I'm going to help you connect with a professional counsellor who can support you better.");
+                    navigate("/book-counselling");
+                }, 1000);
+            }
         } catch (error) {
             setMessages((prev) => [
                 ...prev,
@@ -72,9 +118,34 @@ const ModerateRiskDashboard = () => {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 py-8 px-4">
-            <div className="max-w-4xl mx-auto flex flex-col h-[calc(100vh-64px)]">
+        <div className="min-h-screen bg-slate-50 py-8 px-4 relative">
+            {/* Name Prompt Overlay */}
+            {showNamePrompt && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl animate-slide-up">
+                        <div className="w-16 h-16 bg-brand-100 rounded-2xl flex items-center justify-center text-brand-600 mb-6">
+                            <Bot size={32} />
+                        </div>
+                        <h2 className="text-2xl font-bold text-slate-900 mb-2">Welcome to PendoPal!</h2>
+                        <p className="text-slate-500 mb-6">Before we start, what's your name? I'd love to know who I'm chatting with.</p>
+                        <input
+                            type="text"
+                            placeholder="Your name"
+                            value={tempName}
+                            onChange={(e) => setTempName(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && handleSaveName()}
+                            className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-4 outline-none focus:border-brand-500 transition-all mb-4 font-semibold"
+                            autoFocus
+                        />
+                        <CustomButton onClick={handleSaveName} className="w-full py-4 text-lg" disabled={!tempName.trim()}>
+                            Let's Chat
+                        </CustomButton>
+                    </div>
+                </div>
+            )}
 
+            <div className="max-w-4xl mx-auto flex flex-col h-[calc(100vh-64px)]">
+                {/* Previous code... */}
                 <div className="flex items-center justify-between mb-6">
                     <CustomButton variant="ghost" onClick={() => navigate("/")} className="text-slate-500">
                         <ArrowLeft className="mr-2 h-4 w-4" /> Home
@@ -99,19 +170,22 @@ const ModerateRiskDashboard = () => {
                 <div className="flex-1 bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden flex flex-col relative">
 
                     {/* Header Info */}
-                    <div className="p-6 border-b border-slate-50 bg-white sticky top-0 z-10">
+                    <div className="p-6 border-b border-slate-50 bg-white sticky top-0 z-10 flex items-center justify-between">
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-brand-100">
                                 <MessageCircle size={24} />
                             </div>
                             <div>
-                                <h2 className="text-xl font-bold text-slate-900">PendoPal</h2>
+                                <h2 className="text-xl font-bold text-slate-900">{studentName ? `Hi ${studentName}!` : "PendoPal"}</h2>
                                 <div className="flex items-center gap-1.5">
                                     <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                                     <span className="text-sm font-medium text-slate-500">Always here to listen</span>
                                 </div>
                             </div>
                         </div>
+                        <CustomButton variant="outline" size="sm" onClick={handleEndChat} className="text-red-500 border-red-100 hover:bg-red-50 hover:text-red-600">
+                            End Chat
+                        </CustomButton>
                     </div>
 
                     {/* Message Area */}
