@@ -10,7 +10,7 @@ import api from './api';
  */
 export const getChatbotResponse = async (userMessage, history = [], studentName = "", sessionId = "") => {
   try {
-    const response = await api.post('/message', {
+    const response = await api.post('/api/message', {
       message: userMessage,
       history: history,
       studentName: studentName,
