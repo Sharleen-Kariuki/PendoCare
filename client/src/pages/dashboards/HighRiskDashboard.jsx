@@ -1,151 +1,158 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Video, Calendar, AlertTriangle, Sparkles, Heart } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import { ArrowLeft, Video, Calendar, AlertTriangle, Heart, MessageCircle, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
-
-// Custom UI Components (Replacements for Shadcn)
-const CustomButton = ({ children, onClick, variant = 'primary', className = '', size = 'md' }) => {
-    const baseStyles = "inline-flex items-center justify-center rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none";
-    const variants = {
-        primary: "bg-brand-600 text-white hover:bg-brand-700 shadow-lg shadow-brand-100",
-        secondary: "bg-white text-slate-900 border-2 border-slate-100 hover:border-brand-200 hover:text-brand-600 shadow-sm",
-        ghost: "text-slate-500 hover:text-brand-600 hover:bg-brand-50",
-        destructive: "bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-100",
-        soft: "bg-brand-50 text-brand-700 hover:bg-brand-100"
-    };
-    const sizes = {
-        sm: "px-4 py-2 text-sm",
-        md: "px-6 py-3 text-base",
-        lg: "px-8 py-4 text-lg"
-    };
-
-    return (
-        <button onClick={onClick} className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}>
-            {children}
-        </button>
-    );
-};
-
-const CustomCard = ({ children, className = '', onClick, style }) => (
-    <div
-        onClick={onClick}
-        style={style}
-        className={`bg-white rounded-[2.5rem] border border-slate-100 shadow-soft overflow-hidden cursor-pointer transition-all hover:shadow-xl hover:border-brand-200 group ${className}`}
-    >
-        {children}
-    </div>
-);
 
 const HighRiskDashboard = () => {
     const navigate = useNavigate();
 
     return (
-        <div className="min-h-screen bg-slate-50 py-12 px-4 selection:bg-red-100 selection:text-red-900">
-            <div className="max-w-4xl mx-auto">
-                <CustomButton variant="ghost" onClick={() => navigate("/")} className="mb-8">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to Home
-                </CustomButton>
+        <div className="min-h-screen bg-slate-950 py-10 px-4 relative overflow-hidden">
+            {/* Background orbs */}
+            <div className="absolute top-[-150px] right-[-100px] w-[400px] h-[400px] bg-red-500/5 rounded-full blur-[130px] pointer-events-none" />
+            <div className="absolute bottom-[-100px] left-[-80px] w-[350px] h-[350px] bg-brand-500/6 rounded-full blur-[100px] pointer-events-none" />
 
-                {/* Emergency Alert Area */}
+            <div className="max-w-4xl mx-auto relative z-10">
+                <Link to="/" className="flex items-center gap-2 text-slate-500 hover:text-brand-400 transition-colors text-sm font-medium mb-8">
+                    <ArrowLeft size={16} />
+                    Back to Home
+                </Link>
+
+                {/* Emergency Alert */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mb-10 bg-red-50 border-2 border-red-100 rounded-[2.5rem] p-8 md:p-10 relative overflow-hidden"
+                    className="mb-10 rounded-3xl p-8 md:p-10 relative overflow-hidden"
+                    style={{
+                        background: 'rgba(239, 68, 68, 0.08)',
+                        border: '1px solid rgba(239, 68, 68, 0.15)',
+                    }}
                 >
+                    <div className="absolute top-0 right-0 w-48 h-48 bg-red-500/8 rounded-full blur-[60px] pointer-events-none" />
                     <div className="relative z-10 flex flex-col md:flex-row gap-8 items-start">
-                        <div className="w-16 h-16 bg-red-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-red-200 shrink-0 animate-pulse">
-                            <AlertTriangle size={32} />
+                        <div className="w-14 h-14 bg-gradient-to-br from-red-400 to-red-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-red-500/20 shrink-0 animate-pulse">
+                            <AlertTriangle size={28} />
                         </div>
                         <div>
-                            <h2 className="text-2xl font-black text-red-900 mb-2 tracking-tight">Immediate Support Available</h2>
-                            <p className="text-lg text-red-700 mb-6 font-medium leading-relaxed">
+                            <h2 className="text-2xl font-display font-bold text-red-300 mb-2">Immediate Support Available</h2>
+                            <p className="text-red-300/70 mb-6 leading-relaxed">
                                 If you're in crisis or having thoughts of harming yourself, please contact these services immediately. You are not alone.
                             </p>
                             <div className="grid sm:grid-cols-2 gap-4">
-                                <div className="bg-white/60 backdrop-blur-sm p-4 rounded-2xl border border-red-200">
-                                    <span className="text-xs font-bold text-red-400 uppercase tracking-widest block mb-1">MOH Hotline</span>
-                                    <span className="text-xl font-black text-red-900">0800 720 648</span>
+                                <div className="rounded-2xl p-4"
+                                    style={{
+                                        background: 'rgba(239, 68, 68, 0.08)',
+                                        border: '1px solid rgba(239, 68, 68, 0.12)',
+                                    }}
+                                >
+                                    <span className="text-[10px] font-bold text-red-400/60 uppercase tracking-widest block mb-1">MOH Hotline</span>
+                                    <span className="text-xl font-display font-bold text-red-300">0800 720 648</span>
                                 </div>
-                                <div className="bg-white/60 backdrop-blur-sm p-4 rounded-2xl border border-red-200">
-                                    <span className="text-xs font-bold text-red-400 uppercase tracking-widest block mb-1">Emergency Services</span>
-                                    <span className="text-xl font-black text-red-900">999 / 112</span>
+                                <div className="rounded-2xl p-4"
+                                    style={{
+                                        background: 'rgba(239, 68, 68, 0.08)',
+                                        border: '1px solid rgba(239, 68, 68, 0.12)',
+                                    }}
+                                >
+                                    <span className="text-[10px] font-bold text-red-400/60 uppercase tracking-widest block mb-1">Emergency Services</span>
+                                    <span className="text-xl font-display font-bold text-red-300">999 / 112</span>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div className="absolute -top-24 -right-24 w-64 h-64 bg-red-100 rounded-full blur-3xl opacity-50"></div>
                 </motion.div>
 
-                <div className="text-center mb-12 animate-fade-in">
-                    <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-4 tracking-tight">Professional Counseling</h1>
-                    <p className="text-xl text-slate-500 max-w-2xl mx-auto font-medium leading-relaxed">
+                {/* Main Title */}
+                <div className="text-center mb-12">
+                    <h1 className="font-display text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">
+                        Professional Counseling
+                    </h1>
+                    <p className="text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
                         Connect with a licensed mental health professional who understands what you're going through.
                     </p>
                 </div>
 
-                <div className="grid md:grid-cols-1 gap-6 mb-12">
-                    {/* Video Call Option */}
-                    <CustomCard
+                {/* Options */}
+                <div className="space-y-5 mb-12">
+                    {/* Video Call */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 }}
                         onClick={() => navigate("/book-counselling")}
-                        className="p-8 md:p-12 animate-slide-up"
+                        className="glass-card cursor-pointer !p-8 md:!p-10 group"
                     >
                         <div className="flex flex-col md:flex-row items-center gap-8 md:text-left text-center">
-                            <div className="w-20 h-20 bg-brand-50 rounded-3xl flex items-center justify-center text-brand-600 group-hover:scale-110 transition-transform shadow-sm">
-                                <Video size={36} />
+                            <div className="w-16 h-16 bg-gradient-to-br from-brand-400 to-brand-600 rounded-2xl flex items-center justify-center text-white
+                                            shadow-lg shadow-brand-500/20 group-hover:scale-110 transition-transform">
+                                <Video size={30} />
                             </div>
                             <div className="flex-1">
-                                <h3 className="text-2xl md:text-3xl font-black text-slate-900 mb-2">Secure Video Call</h3>
-                                <p className="text-lg text-slate-500 font-medium">Book a private video session with a counselor at a time that works for you.</p>
+                                <h3 className="text-2xl font-display font-bold text-white mb-2">Secure Video Call</h3>
+                                <p className="text-slate-400">Book a private video session with a counselor at a time that works for you.</p>
                             </div>
-                            <CustomButton variant="primary" size="lg" className="w-full md:w-auto">
+                            <button className="btn-glass w-full md:w-auto group/btn">
                                 Schedule Call
-                            </CustomButton>
+                                <ArrowRight size={16} className="opacity-0 -ml-2 group-hover/btn:opacity-100 group-hover/btn:ml-0 transition-all" />
+                            </button>
                         </div>
-                    </CustomCard>
+                    </motion.div>
 
-                    {/* Live Chat Option */}
-                    <CustomCard
+                    {/* Live Chat */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
                         onClick={() => navigate("/chat")}
-                        className="p-8 md:p-12 animate-slide-up"
-                        style={{ animationDelay: "0.1s" }}
+                        className="glass-card cursor-pointer !p-8 md:!p-10 group"
                     >
                         <div className="flex flex-col md:flex-row items-center gap-8 md:text-left text-center">
-                            <div className="w-20 h-20 bg-green-50 rounded-3xl flex items-center justify-center text-green-600 group-hover:scale-110 transition-transform shadow-sm">
-                                <Calendar size={36} />
+                            <div className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-2xl flex items-center justify-center text-white
+                                            shadow-lg shadow-emerald-500/20 group-hover:scale-110 transition-transform">
+                                <MessageCircle size={30} />
                             </div>
                             <div className="flex-1">
-                                <h3 className="text-2xl md:text-3xl font-black text-slate-900 mb-2">Live Text Chat</h3>
-                                <p className="text-lg text-slate-500 font-medium">Connect with an available counselor right now via secure instant messaging.</p>
+                                <h3 className="text-2xl font-display font-bold text-white mb-2">Live Text Chat</h3>
+                                <p className="text-slate-400">Connect with an available counselor right now via secure instant messaging.</p>
                             </div>
-                            <CustomButton variant="soft" size="lg" className="bg-green-50 text-green-700 hover:bg-green-100 w-full md:w-auto">
+                            <button className="btn-glass-secondary w-full md:w-auto">
                                 Start Chatting
-                            </CustomButton>
+                            </button>
                         </div>
-                    </CustomCard>
+                    </motion.div>
                 </div>
 
-                {/* Footer Resources Card */}
+                {/* Resources Footer */}
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ delay: 0.5 }}
-                    className="bg-white rounded-[2.5rem] p-8 md:p-10 border border-slate-100 shadow-soft"
+                    transition={{ delay: 0.4 }}
+                    className="rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-6"
+                    style={{
+                        background: 'rgba(255, 255, 255, 0.03)',
+                        border: '1px solid rgba(255, 255, 255, 0.06)',
+                    }}
                 >
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-500">
-                                <Heart size={24} />
-                            </div>
-                            <div>
-                                <h4 className="text-xl font-bold text-slate-900 mb-1">Explore Wellness Materials</h4>
-                                <p className="text-slate-500 font-medium leading-relaxed">Explore self-help resources while you wait for your session.</p>
-                            </div>
+                    <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-500"
+                            style={{ background: 'rgba(255, 255, 255, 0.06)' }}>
+                            <Heart size={20} />
                         </div>
-                        <CustomButton variant="secondary" onClick={() => navigate("/dashboard/low")} className="whitespace-nowrap">
-                            View Resources
-                        </CustomButton>
+                        <div>
+                            <h4 className="font-display font-bold text-white mb-0.5">Explore Wellness Materials</h4>
+                            <p className="text-slate-500 text-sm">Explore self-help resources while you wait for your session.</p>
+                        </div>
                     </div>
+                    <button
+                        onClick={() => navigate("/dashboard/low")}
+                        className="text-sm font-semibold px-5 py-2.5 rounded-xl transition-all text-brand-300 hover:text-brand-200 whitespace-nowrap"
+                        style={{
+                            background: 'rgba(13, 148, 136, 0.1)',
+                            border: '1px solid rgba(94, 234, 212, 0.15)',
+                        }}
+                    >
+                        View Resources
+                    </button>
                 </motion.div>
             </div>
         </div>

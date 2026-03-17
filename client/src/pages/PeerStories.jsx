@@ -1,29 +1,62 @@
 import React from "react";
-// // import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { ArrowLeft, Heart, Users } from "lucide-react";
 
 const PeerStories = () => {
   const navigate = useNavigate();
   return (
-    <div className="min-h-screen bg-gradient-subtle py-12 px-4">
-      <div className="max-w-4xl mx-auto">
-        <button
-          onClick={() => navigate("/dashboard/low")}
-          className="mb-8 px-5 py-2.5 text-sm font-semibold text-slate-600 hover:text-brand-600 border border-slate-200 hover:border-brand-200 rounded-xl bg-white shadow-soft transition-all flex items-center gap-2"
-        >
-          ← Back to Resources
-        </button>
-        <div className="padlet-embed" style={{ border: "1px solid rgba(0,0,0,0.1)", borderRadius: 2, boxSizing: "border-box", overflow: "hidden", position: "relative", width: "100%", background: "#F4F4F4" }}>
+    <div className="min-h-screen bg-slate-950 py-8 px-4 relative overflow-hidden">
+      {/* Background orbs */}
+      <div className="absolute top-[-150px] left-[-100px] w-[400px] h-[400px] bg-brand-500/6 rounded-full blur-[130px] pointer-events-none" />
+      <div className="absolute bottom-[-100px] right-[-80px] w-[300px] h-[300px] bg-sky-500/5 rounded-full blur-[100px] pointer-events-none" />
+
+      <div className="max-w-4xl mx-auto relative z-10">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <Link to="/dashboard/low" className="flex items-center gap-2 text-slate-500 hover:text-brand-400 transition-colors text-sm font-medium">
+            <ArrowLeft size={16} />
+            Back to Resources
+          </Link>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-gradient-to-br from-brand-400 to-brand-600 rounded-lg flex items-center justify-center text-white">
+              <Heart size={16} fill="currentColor" />
+            </div>
+            <span className="font-display font-bold text-white text-sm">PendoCare</span>
+          </div>
+        </div>
+
+        {/* Title */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-5"
+            style={{
+              background: 'rgba(13, 148, 136, 0.1)',
+              border: '1px solid rgba(94, 234, 212, 0.15)',
+            }}>
+            <Users size={14} className="text-brand-400" />
+            <span className="text-sm font-medium text-brand-300">Community</span>
+          </div>
+          <h1 className="font-display text-3xl md:text-4xl font-bold text-white mb-3">Peer Stories</h1>
+          <p className="text-slate-400 max-w-lg mx-auto">
+            Real, anonymous stories from students who've navigated similar challenges. You are not alone.
+          </p>
+        </div>
+
+        {/* Padlet iframe in glass card */}
+        <div className="rounded-3xl overflow-hidden"
+          style={{
+            background: 'rgba(255, 255, 255, 0.04)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+          }}>
           <iframe
             src="https://padlet.com/embed/d4mnom3og1e80eow"
             frameBorder="0"
             allow="camera;microphone;geolocation;display-capture;clipboard-write"
-            style={{ width: "100%", height: 608, display: "block", padding: 0, margin: 0 }}
+            style={{ width: "100%", height: 620, display: "block", padding: 0, margin: 0, borderRadius: '24px 24px 0 0' }}
             title="Peer Stories"
-          ></iframe>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "end", margin: 0, height: 28 }}>
+          />
+          <div className="flex items-center justify-end px-4 py-2" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
             <a href="https://padlet.com?ref=embed" target="_blank" rel="noopener noreferrer">
-              <img src="https://padlet.net/embeds/made_with_padlet_2022.png" width="114" height="28" alt="Made with Padlet" />
+              <img src="https://padlet.net/embeds/made_with_padlet_2022.png" width="114" height="28" alt="Made with Padlet" style={{ opacity: 0.5 }} />
             </a>
           </div>
         </div>

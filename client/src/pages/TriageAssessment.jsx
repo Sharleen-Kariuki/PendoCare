@@ -1,39 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Heart, ChevronRight, ChevronLeft, Sparkles } from "lucide-react";
+import { Heart, ChevronRight, ChevronLeft, Sparkles, ShieldCheck, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-
-// Custom UI Components (Replacements for Shadcn)
-const CustomButton = ({ children, onClick, variant = 'primary', className = '', size = 'md', disabled }) => {
-    const baseStyles = "inline-flex items-center justify-center rounded-xl font-medium transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none";
-    const variants = {
-        primary: "bg-brand-600 text-white hover:bg-brand-700 shadow-md shadow-brand-100",
-        outline: "bg-white text-slate-600 border border-slate-200 hover:border-brand-200 hover:text-brand-600 shadow-sm",
-        hero: "bg-gradient-to-r from-brand-600 to-indigo-600 text-white hover:opacity-90 shadow-lg shadow-brand-100",
-        ghost: "text-slate-500 hover:text-brand-600 hover:bg-brand-50"
-    };
-    const sizes = {
-        sm: "px-3 py-1.5 text-sm",
-        md: "px-4 py-2 text-sm",
-        lg: "px-6 py-3 text-base"
-    };
-
-    return (
-        <button onClick={onClick} disabled={disabled} className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}>
-            {children}
-        </button>
-    );
-};
-
-const CustomProgress = ({ value }) => (
-    <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-        <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${value}%` }}
-            className="h-full bg-gradient-to-r from-brand-500 to-indigo-500"
-        />
-    </div>
-);
+import { Link } from "react-router-dom";
 
 // PHQ-9 Depression Screening Questions
 const phq9Questions = [
@@ -49,21 +18,21 @@ const phq9Questions = [
 ];
 
 const responseOptions = [
-    { value: "0", label: "Not at all" },
-    { value: "1", label: "Several days" },
-    { value: "2", label: "More than half the days" },
-    { value: "3", label: "Nearly every day" },
+    { value: "0", label: "Not at all", emoji: "😊" },
+    { value: "1", label: "Several days", emoji: "🙂" },
+    { value: "2", label: "More than half the days", emoji: "😔" },
+    { value: "3", label: "Nearly every day", emoji: "😞" },
 ];
 
 const encouragements = [
     "You're doing great! 🌻",
     "Keep going — every step matters 💪",
     "Halfway there! Stay kind to yourself 💖",
-    "Almost done — you’ve got this 🌟",
+    "Almost done — you've got this 🌟",
     "Final stretch — take a deep breath 🌿",
     "You're being brave for checking in 💚",
     "Only a few left — stay with it 🌼",
-    "You’re almost done — proud of you! 💫",
+    "You're almost done — proud of you! 💫",
     "Last one! Thank you for being honest 💙",
 ];
 
@@ -80,7 +49,6 @@ const TriageAssessment = () => {
         newResponses[currentQuestion] = value;
         setResponses(newResponses);
 
-        // Auto-advance slightly delayed for better UX
         if (currentQuestion < phq9Questions.length - 1) {
             setTimeout(() => setCurrentQuestion(currentQuestion + 1), 300);
         }
@@ -91,8 +59,6 @@ const TriageAssessment = () => {
             setCurrentQuestion(currentQuestion + 1);
         } else {
             const totalScore = responses.reduce((sum, res) => sum + parseInt(res || "0"), 0);
-
-            // Routing logic based on score
             if (totalScore <= 9) {
                 navigate("/dashboard/low");
             } else if (totalScore <= 19) {
@@ -110,35 +76,52 @@ const TriageAssessment = () => {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 py-6 px-4 selection:bg-brand-100 selection:text-brand-900">
-            <div className="max-w-2xl mx-auto">
+        <div className="min-h-screen bg-slate-950 py-8 px-4 relative overflow-hidden">
+            {/* Background orbs */}
+            <div className="absolute top-[-200px] left-[-150px] w-[500px] h-[500px] bg-brand-500/8 rounded-full blur-[150px] pointer-events-none" />
+            <div className="absolute bottom-[-150px] right-[-100px] w-[400px] h-[400px] bg-sky-500/6 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute top-1/3 right-1/4 w-[250px] h-[250px] bg-brand-400/5 rounded-full blur-[100px] animate-pulse-soft pointer-events-none" />
+
+            <div className="max-w-2xl mx-auto relative z-10">
+                {/* Intro Modal */}
                 <AnimatePresence>
                     {showIntro && (
                         <motion.div
-                            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+                            className="fixed inset-0 z-50 flex items-center justify-center p-6"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
+                            style={{ background: 'rgba(2, 6, 23, 0.85)', backdropFilter: 'blur(10px)' }}
                         >
                             <motion.div
-                                className="bg-white p-6 rounded-2xl shadow-lg max-w-md mx-4 text-center"
-                                initial={{ scale: 0.8, opacity: 0 }}
+                                initial={{ scale: 0.9, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
-                                exit={{ scale: 0.8, opacity: 0 }}
-                                transition={{ duration: 0.3 }}
+                                exit={{ scale: 0.9, opacity: 0 }}
+                                className="rounded-3xl p-8 max-w-md w-full text-center relative overflow-hidden"
+                                style={{
+                                    background: 'rgba(255, 255, 255, 0.06)',
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    backdropFilter: 'blur(20px)',
+                                }}
                             >
+                                <div className="absolute bottom-0 right-0 w-40 h-40 bg-brand-500/10 rounded-full blur-[60px] pointer-events-none" />
                                 <div className="relative z-10">
-                                    <Heart className="w-10 h-10 mx-auto text-brand-600 mb-4" />
-                                    <h2 className="text-2xl font-semibold mb-3">Welcome 🌸</h2>
-                                    <p className="text-slate-600 mb-6">
+                                    <div className="w-14 h-14 bg-gradient-to-br from-brand-400 to-brand-600 rounded-2xl flex items-center justify-center text-white mx-auto mb-6 shadow-lg shadow-brand-500/25">
+                                        <Heart size={28} />
+                                    </div>
+                                    <h2 className="font-display text-2xl font-bold text-white mb-3">Welcome 🌸</h2>
+                                    <p className="text-slate-400 mb-8 leading-relaxed">
                                         This short wellness check helps you reflect on how you've been
-                                        feeling lately. It's safe, private, and confidential ❤.
+                                        feeling lately. It's safe, private, and confidential ❤
                                     </p>
-                                    <CustomButton onClick={() => setShowIntro(false)} size="md" className="w-full">
+                                    <button
+                                        onClick={() => setShowIntro(false)}
+                                        className="btn-glass w-full !py-4 !rounded-2xl font-bold"
+                                    >
+                                        <Sparkles size={18} />
                                         Start Check-In
-                                    </CustomButton>
+                                    </button>
                                 </div>
-                                <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-brand-50 rounded-full blur-3xl opacity-50"></div>
                             </motion.div>
                         </motion.div>
                     )}
@@ -146,42 +129,76 @@ const TriageAssessment = () => {
 
                 {!showIntro && (
                     <>
-                        <div className="text-center mb-12">
-                            <div className="w-16 h-16 mx-auto mb-4 bg-white rounded-2xl shadow-soft flex items-center justify-center text-brand-600 animate-fade-in">
-                                <Heart className="w-8 h-8" fill="currentColor" />
+                        {/* Header */}
+                        <div className="flex items-center justify-between mb-8">
+                            <Link to="/" className="flex items-center gap-2 text-slate-500 hover:text-brand-400 transition-colors text-sm font-medium">
+                                <ArrowLeft size={16} />
+                                Home
+                            </Link>
+                            <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 bg-gradient-to-br from-brand-400 to-brand-600 rounded-lg flex items-center justify-center text-white">
+                                    <Heart size={16} fill="currentColor" />
+                                </div>
+                                <span className="font-display font-bold text-white">Wellness Check</span>
                             </div>
-                            <h1 className="text-4xl font-black text-slate-900 mb-2 tracking-tight">Wellness Check</h1>
-                            <p className="text-slate-500 font-medium flex items-center justify-center gap-2">
-                                <Sparkles size={16} /> Talk to Us ❤
-                            </p>
                         </div>
 
-                        <div className="mb-10 bg-white p-6 rounded-3xl shadow-soft border border-slate-100 animate-slide-up">
+                        {/* Progress Card */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="mb-8 rounded-3xl p-6"
+                            style={{
+                                background: 'rgba(255, 255, 255, 0.04)',
+                                border: '1px solid rgba(255, 255, 255, 0.08)',
+                            }}
+                        >
                             <div className="flex justify-between items-end mb-4">
                                 <div>
-                                    <span className="text-sm font-bold text-slate-400 uppercase tracking-widest block mb-1">Current Progress</span>
-                                    <span className="text-2xl font-black text-slate-900">Question {currentQuestion + 1} <span className="text-slate-300 font-bold">/ {phq9Questions.length}</span></span>
+                                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.2em] block mb-1">Progress</span>
+                                    <span className="text-2xl font-display font-bold text-white">
+                                        Question {currentQuestion + 1} <span className="text-slate-600">/ {phq9Questions.length}</span>
+                                    </span>
                                 </div>
-                                <span className="text-lg font-black text-brand-600">{Math.round(progress)}%</span>
+                                <span className="text-lg font-bold text-brand-400">{Math.round(progress)}%</span>
                             </div>
-                            <CustomProgress value={progress} />
-                            <p className="text-center text-lg font-bold text-slate-500 mt-6 animate-pulse">
+
+                            {/* Progress bar */}
+                            <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                                <motion.div
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${progress}%` }}
+                                    transition={{ duration: 0.4, ease: "easeOut" }}
+                                    className="h-full rounded-full bg-gradient-to-r from-brand-400 to-sky-400"
+                                />
+                            </div>
+
+                            <p className="text-center text-brand-300/70 font-medium mt-4 text-sm">
                                 {encouragements[currentQuestion]}
                             </p>
-                        </div>
+                        </motion.div>
 
+                        {/* Question Card */}
                         <AnimatePresence mode="wait">
                             <motion.div
                                 key={currentQuestion}
-                                initial={{ opacity: 0, x: 20 }}
+                                initial={{ opacity: 0, x: 30 }}
                                 animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
+                                exit={{ opacity: 0, x: -30 }}
                                 transition={{ duration: 0.3 }}
-                                className="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden"
+                                className="rounded-3xl overflow-hidden"
+                                style={{
+                                    background: 'rgba(255, 255, 255, 0.06)',
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    backdropFilter: 'blur(20px)',
+                                }}
                             >
-                                <div className="p-8 md:p-12">
-                                    <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 mb-8 leading-tight">
-                                        {phq9Questions[currentQuestion]}
+                                <div className="p-8 md:p-10">
+                                    <h2 className="text-xl md:text-2xl font-display font-bold text-white mb-8 leading-relaxed">
+                                        Over the last 2 weeks, how often have you been bothered by:
+                                        <span className="block mt-3 text-brand-300">
+                                            {phq9Questions[currentQuestion]}
+                                        </span>
                                     </h2>
 
                                     <div className="space-y-3">
@@ -189,18 +206,31 @@ const TriageAssessment = () => {
                                             <div
                                                 key={option.value}
                                                 onClick={() => handleResponse(option.value)}
-                                                className={`flex items-center p-6 rounded-[1.5rem] border-2 transition-all cursor-pointer group select-none ${responses[currentQuestion] === option.value
-                                                        ? 'border-brand-600 bg-brand-50/50'
-                                                        : 'border-slate-100 hover:border-brand-200 hover:bg-slate-50'
+                                                className={`flex items-center p-5 rounded-2xl transition-all cursor-pointer group select-none ${responses[currentQuestion] === option.value
+                                                        ? ''
+                                                        : 'hover:bg-white/5'
                                                     }`}
+                                                style={{
+                                                    background: responses[currentQuestion] === option.value
+                                                        ? 'rgba(13, 148, 136, 0.15)'
+                                                        : 'rgba(255, 255, 255, 0.03)',
+                                                    border: responses[currentQuestion] === option.value
+                                                        ? '1px solid rgba(94, 234, 212, 0.3)'
+                                                        : '1px solid rgba(255, 255, 255, 0.06)',
+                                                }}
                                             >
                                                 <div className={`w-6 h-6 rounded-full border-2 mr-4 flex items-center justify-center transition-all ${responses[currentQuestion] === option.value
-                                                        ? 'border-brand-600 bg-brand-600'
-                                                        : 'border-slate-300 group-hover:border-brand-400 bg-white'
+                                                        ? 'border-brand-400 bg-brand-400'
+                                                        : 'border-slate-600 group-hover:border-brand-500'
                                                     }`}>
-                                                    {responses[currentQuestion] === option.value && <div className="w-2.5 h-2.5 rounded-full bg-white shadow-sm" />}
+                                                    {responses[currentQuestion] === option.value && (
+                                                        <div className="w-2.5 h-2.5 rounded-full bg-white" />
+                                                    )}
                                                 </div>
-                                                <span className={`text-lg font-bold transition-colors ${responses[currentQuestion] === option.value ? 'text-brand-900' : 'text-slate-700'
+                                                <span className="text-xl mr-3">{option.emoji}</span>
+                                                <span className={`text-base font-medium transition-colors ${responses[currentQuestion] === option.value
+                                                        ? 'text-brand-200'
+                                                        : 'text-slate-300'
                                                     }`}>
                                                     {option.label}
                                                 </span>
@@ -208,34 +238,49 @@ const TriageAssessment = () => {
                                         ))}
                                     </div>
 
-                                    <div className="flex gap-4 mt-10">
-                                        <CustomButton
-                                            variant="outline"
+                                    {/* Nav buttons */}
+                                    <div className="flex gap-4 mt-8">
+                                        <button
                                             onClick={handlePrevious}
                                             disabled={currentQuestion === 0}
-                                            className="flex-1"
+                                            className="flex-1 py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all
+                                                       disabled:opacity-30 disabled:cursor-not-allowed text-slate-300 hover:text-white"
+                                            style={{
+                                                background: 'rgba(255, 255, 255, 0.06)',
+                                                border: '1px solid rgba(255, 255, 255, 0.08)',
+                                            }}
                                         >
-                                            <ChevronLeft className="mr-2 w-5 h-5" /> Previous
-                                        </CustomButton>
-                                        <CustomButton
-                                            variant="hero"
+                                            <ChevronLeft size={18} /> Previous
+                                        </button>
+                                        <button
                                             onClick={handleNext}
                                             disabled={!responses[currentQuestion]}
-                                            className="flex-3 w-full"
+                                            className="btn-glass flex-[2] !py-4 !rounded-2xl font-bold disabled:opacity-30 disabled:cursor-not-allowed"
                                         >
                                             {currentQuestion === phq9Questions.length - 1
-                                                ? "See Results "
+                                                ? "See Results"
                                                 : "Next Question"}
-                                            <ChevronRight className="ml-2 w-5 h-5" />
-                                        </CustomButton>
+                                            <ChevronRight size={18} />
+                                        </button>
                                     </div>
                                 </div>
                             </motion.div>
                         </AnimatePresence>
 
-                        <div className="mt-8 p-6 bg-slate-900 rounded-3xl text-center shadow-xl">
-                            <p className="text-slate-300 font-medium">
-                                Remember: This reflection helps us provide you with the right support.
+                        {/* Confidentiality notice */}
+                        <div
+                            className="mt-8 p-5 rounded-2xl text-center"
+                            style={{
+                                background: 'rgba(255, 255, 255, 0.03)',
+                                border: '1px solid rgba(255, 255, 255, 0.05)',
+                            }}
+                        >
+                            <div className="flex items-center justify-center gap-2 mb-2">
+                                <ShieldCheck size={14} className="text-brand-400" />
+                                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Confidential</span>
+                            </div>
+                            <p className="text-slate-500 text-sm">
+                                This reflection helps us provide you with the right support.
                                 <span className="text-brand-400"> Your responses are completely confidential.</span>
                             </p>
                         </div>

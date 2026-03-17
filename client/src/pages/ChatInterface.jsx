@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import {
     getOrCreateConversation,
     sendMessage,
@@ -7,38 +7,28 @@ import {
     parseConversationLog
 } from "../services/chatService";
 import {
-    ArrowLeft, Paperclip, Mic, Send, MoreVertical, Phone, Video,
-    Check, CheckCheck, User, Clock, ShieldAlert
+    ArrowLeft, Send, MoreVertical, Video,
+    CheckCheck, User, ShieldCheck, Heart, Phone
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const ChatInterface = () => {
     const navigate = useNavigate();
-    // Access Code used as ID
-    const studentCode = localStorage.getItem('user_name'); // e.g. NRB-1234
+    const studentCode = localStorage.getItem('user_name');
     const schoolName = localStorage.getItem('school_name') || 'Unknown School';
 
     const [conversation, setConversation] = useState(null);
     const [messages, setMessages] = useState([]);
     const [inputText, setInputText] = useState("");
     const [isSending, setIsSending] = useState(false);
-
     const messagesEndRef = useRef(null);
 
-    // 1. Initialize Conversation
     useEffect(() => {
         let subscription = null;
-
         const initChat = async () => {
-            if (!studentCode) {
-                navigate('/login');
-                return;
-            }
-
-            console.log("[Chat] Initializing for:", studentCode);
+            if (!studentCode) { navigate('/login'); return; }
             try {
                 const conv = await getOrCreateConversation(studentCode);
-
                 if (conv) {
                     if (conv.risk_level === 'completed') {
                         localStorage.clear();
@@ -47,19 +37,13 @@ const ChatInterface = () => {
                     }
                     setConversation(conv);
                     setMessages(parseConversationLog(conv.content));
-
-                    // Subscribe to Realtime Updates
                     subscription = subscribeToConversation(conv.id, (updatedConv) => {
-                        console.log("[Realtime] Update:", updatedConv);
-
-                        // If session is completed by counsellor, redirect to login
                         if (updatedConv.risk_level === 'completed') {
                             alert("This support session has ended. You will be returned to the login page.");
-                            localStorage.clear(); // Clear all session data
-                            window.location.href = '/login'; // Force a full page refresh/redirect
+                            localStorage.clear();
+                            window.location.href = '/login';
                             return;
                         }
-
                         setConversation(updatedConv);
                         setMessages(parseConversationLog(updatedConv.content));
                     });
@@ -68,84 +52,98 @@ const ChatInterface = () => {
                 console.error("Chat init failed", err);
             }
         };
-
         initChat();
-
-        return () => {
-            if (subscription) subscription.unsubscribe();
-        };
+        return () => { if (subscription) subscription.unsubscribe(); };
     }, [studentCode, navigate]);
 
-    // 2. Auto-scroll
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
     const handleSendMessage = async () => {
         if (!inputText.trim() || !conversation) return;
-
         const text = inputText;
-        setInputText(""); // Optimistic clear
+        setInputText("");
         setIsSending(true);
-
         try {
             await sendMessage(conversation.id, 'student', text);
-            // Result will come via Realtime subscription
         } catch (err) {
             console.error("Failed to send:", err);
-            setInputText(text); // Revert on failure
+            setInputText(text);
         } finally {
             setIsSending(false);
         }
     };
 
-    // Determine Counsellor Status
     const isCounsellorConnected = !!conversation?.counsellor_id;
 
-    const handleVideoRequest = () => {
-        // Redirect to the dedicated Google Meet booking page
-        navigate('/book-counselling');
-    };
-
     return (
-        <div className="min-h-screen bg-[#E5DDD5] flex flex-col relative overflow-hidden">
-            {/* WhatsApp-style Background Pattern Overlay */}
-            <div className="absolute inset-0 opacity-[0.06] pointer-events-none bg-[url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')] bg-repeat"></div>
+        <div className="min-h-screen bg-slate-950 flex flex-col relative overflow-hidden">
+            {/* Subtle background orbs */}
+            <div className="absolute top-[-100px] left-[-80px] w-[300px] h-[300px] bg-brand-500/5 rounded-full blur-[100px] pointer-events-none" />
+            <div className="absolute bottom-[-80px] right-[-60px] w-[250px] h-[250px] bg-sky-500/4 rounded-full blur-[80px] pointer-events-none" />
 
-            {/* Header */}
-            <div className="bg-[#008069] text-white px-4 py-3 flex items-center shadow-md z-10 sticky top-0">
-                <button onClick={() => navigate("/dashboard/high")} className="mr-2 rounded-full p-1 hover:bg-white/10 transition">
-                    <ArrowLeft size={24} />
+            {/* ── Header ── */}
+            <div className="relative z-20 sticky top-0 px-4 py-3 flex items-center gap-3"
+                style={{
+                    background: 'rgba(2, 6, 23, 0.85)',
+                    backdropFilter: 'blur(20px)',
+                    borderBottom: '1px solid rgba(255,255,255,0.06)',
+                }}>
+                <button
+                    onClick={() => navigate("/dashboard/high")}
+                    className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+                    style={{ background: 'rgba(255,255,255,0.06)' }}
+                >
+                    <ArrowLeft size={18} />
                 </button>
 
-                <div className="w-10 h-10 bg-slate-300 rounded-full flex items-center justify-center overflow-hidden mr-3 border border-white/20">
-                    <User className="text-slate-500" />
+                <div className="w-10 h-10 bg-gradient-to-br from-brand-400 to-brand-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-brand-500/20">
+                    <User size={20} />
                 </div>
 
                 <div className="flex-1">
-                    <h1 className="font-bold text-lg leading-tight">
+                    <h1 className="font-display font-bold text-white text-base leading-tight">
                         {isCounsellorConnected ? "Counsellor Connected" : "Waiting for Counsellor..."}
                     </h1>
-                    <p className="text-xs text-green-100 opacity-90 truncate">
-                        {isCounsellorConnected ? "Online" : "Connecting you to a professional..."}
-                    </p>
+                    <div className="flex items-center gap-1.5">
+                        <span className={`w-1.5 h-1.5 rounded-full ${isCounsellorConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400 animate-pulse'}`} />
+                        <p className="text-xs text-slate-500">
+                            {isCounsellorConnected ? "Online" : "Connecting you to a professional..."}
+                        </p>
+                    </div>
                 </div>
 
-                <div className="flex items-center gap-4 text-white/80">
-                    <Video size={24} className="cursor-pointer hover:text-white" onClick={handleVideoRequest} />
-                    <Phone size={22} className="cursor-pointer hover:text-white" />
-                    <MoreVertical size={22} className="cursor-pointer hover:text-white" />
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => navigate('/book-counselling')}
+                        className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 hover:text-brand-400 transition-colors"
+                        style={{ background: 'rgba(255,255,255,0.06)' }}
+                    >
+                        <Video size={18} />
+                    </button>
+                    <button className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+                        style={{ background: 'rgba(255,255,255,0.06)' }}>
+                        <Phone size={16} />
+                    </button>
                 </div>
             </div>
 
-            {/* Chat Area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-2 z-10">
-
-                {/* Security / Encryption Notice */}
-                <div className="flex justify-center mb-6">
-                    <div className="bg-[#FFF5C4] text-[#5E5151] text-xs px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1.5 max-w-[85%] text-center">
-                        <ShieldAlert size={12} className="shrink-0" />
-                        <span>Messages are end-to-end encrypted. {conversation?.risk_level === 'high' && <span className="font-bold text-red-600 block mt-1">Status: High Priority Support</span>}</span>
+            {/* ── Chat Area ── */}
+            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 relative z-10">
+                {/* Encryption Notice */}
+                <div className="flex justify-center mb-4">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs"
+                        style={{
+                            background: 'rgba(13,148,136,0.08)',
+                            border: '1px solid rgba(94,234,212,0.1)',
+                            color: '#5eead4',
+                        }}>
+                        <ShieldCheck size={12} />
+                        <span>Messages are end-to-end encrypted</span>
+                        {conversation?.risk_level === 'high' && (
+                            <span className="text-red-400 font-bold ml-1">• High Priority</span>
+                        )}
                     </div>
                 </div>
 
@@ -153,38 +151,37 @@ const ChatInterface = () => {
                 <AnimatePresence>
                     {messages.map((msg, idx) => {
                         const isMe = msg.role === 'student';
-
                         return (
                             <motion.div
                                 key={idx}
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                animate={{ opacity: 1, scale: 1 }}
+                                initial={{ opacity: 0, scale: 0.97, y: 10 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                transition={{ duration: 0.2 }}
                                 className={`flex ${isMe ? "justify-end" : "justify-start"} mb-1`}
                             >
                                 <div
-                                    className={`relative max-w-[80%] px-3 py-1.5 rounded-lg shadow-sm text-[15px] leading-relaxed break-words ${isMe
-                                        ? "bg-[#E7FFDB] text-slate-800 rounded-tr-none"
-                                        : "bg-white text-slate-800 rounded-tl-none"
+                                    className={`relative max-w-[80%] px-4 py-3 rounded-2xl text-[15px] leading-relaxed break-words ${isMe ? 'rounded-br-sm' : 'rounded-bl-sm'
                                         }`}
+                                    style={{
+                                        background: isMe
+                                            ? 'rgba(13, 148, 136, 0.3)'
+                                            : 'rgba(255, 255, 255, 0.06)',
+                                        border: `1px solid ${isMe
+                                            ? 'rgba(94, 234, 212, 0.15)'
+                                            : 'rgba(255, 255, 255, 0.08)'
+                                            }`,
+                                        color: isMe ? '#ccfbf1' : '#cbd5e1',
+                                    }}
                                 >
-                                    {/* Tail SVG Mockup (Simplified via CSS) */}
-                                    {isMe ? (
-                                        <div className="absolute top-0 -right-[8px] w-0 h-0 border-t-[10px] border-t-[#E7FFDB] border-r-[10px] border-r-transparent" />
-                                    ) : (
-                                        <div className="absolute top-0 -left-[8px] w-0 h-0 border-t-[10px] border-t-white border-l-[10px] border-l-transparent" />
-                                    )}
-
                                     <p>{msg.text}</p>
-
-                                    <div className="flex justify-end items-center gap-1 mt-0.5">
+                                    <div className="flex justify-end items-center gap-1.5 mt-1">
                                         <span className="text-[10px] text-slate-500 font-medium">
-                                            {/* We can parse msg.timestamp if needed, or mostly rely on it being ISO */}
                                             {typeof msg.timestamp === 'string' && msg.timestamp.includes('T')
                                                 ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                                                 : "Just now"
                                             }
                                         </span>
-                                        {isMe && <CheckCheck size={14} className="text-[#53BDEB]" />}
+                                        {isMe && <CheckCheck size={13} className="text-brand-400" />}
                                     </div>
                                 </div>
                             </motion.div>
@@ -194,39 +191,43 @@ const ChatInterface = () => {
                 <div ref={messagesEndRef} />
             </div>
 
-            {/* Input Area */}
-            <div className="bg-[#F0F2F5] p-2 flex items-end gap-2 z-20">
-                <div className="bg-white flex-1 rounded-2xl flex items-center px-4 py-2 shadow-sm border border-slate-100">
-                    <button className="text-slate-400 hover:text-slate-600 mr-3 transition-colors">
-                        <Paperclip size={20} />
-                    </button>
-                    <textarea
-                        value={inputText}
-                        onChange={(e) => setInputText(e.target.value)}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                                e.preventDefault();
-                                handleSendMessage();
-                            }
-                        }}
-                        className="flex-1 bg-transparent border-none outline-none resize-none max-h-24 py-1 text-slate-800 placeholder:text-slate-400"
-                        placeholder="Type a message"
-                        rows={1}
-                        style={{ minHeight: '24px' }}
+            {/* ── Input Area ── */}
+            <div className="relative z-20 px-3 py-3"
+                style={{
+                    background: 'rgba(2, 6, 23, 0.9)',
+                    backdropFilter: 'blur(20px)',
+                    borderTop: '1px solid rgba(255,255,255,0.06)',
+                }}>
+                <div className="flex items-end gap-2">
+                    <div className="flex-1 rounded-2xl px-4 py-3 flex items-center"
+                        style={{
+                            background: 'rgba(255, 255, 255, 0.06)',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                        }}>
+                        <textarea
+                            value={inputText}
+                            onChange={(e) => setInputText(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    handleSendMessage();
+                                }
+                            }}
+                            className="flex-1 bg-transparent border-none outline-none resize-none max-h-24 py-0.5 text-white placeholder:text-slate-600 text-[15px]"
+                            placeholder="Type a message"
+                            rows={1}
+                            style={{ minHeight: '24px' }}
+                            disabled={isSending}
+                        />
+                    </div>
+                    <button
+                        onClick={inputText.trim() ? handleSendMessage : null}
                         disabled={isSending}
-                    />
+                        className="btn-glass !w-12 !h-12 !p-0 !rounded-xl"
+                    >
+                        <Send size={18} className="ml-0.5" />
+                    </button>
                 </div>
-
-                <button
-                    onClick={inputText.trim() ? handleSendMessage : null}
-                    className={`w-12 h-12 rounded-full flex items-center justify-center shadow-md transition-all ${inputText.trim()
-                        ? "bg-[#008069] text-white hover:bg-[#006e5a] active:scale-95"
-                        : "bg-[#008069] text-white hover:bg-[#006e5a]"
-                        }`}
-                    disabled={isSending}
-                >
-                    {inputText.trim() ? <Send size={20} className="ml-0.5" /> : <Mic size={20} />}
-                </button>
             </div>
         </div>
     );

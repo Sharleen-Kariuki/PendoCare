@@ -1,6 +1,6 @@
 import React from 'react';
-import { useNavigate } from "react-router-dom";
-import { BookOpen, Heart, Brain, Users, ArrowLeft, LogOut } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import { BookOpen, Heart, Brain, Users, ArrowLeft, LogOut, ArrowRight, Sparkles } from "lucide-react";
 
 const LowRiskDashboard = () => {
     const navigate = useNavigate();
@@ -10,100 +10,132 @@ const LowRiskDashboard = () => {
             icon: BookOpen,
             title: "Mental Health Basics",
             description: "Understanding stress, anxiety, and how to maintain emotional wellness",
-            color: "bg-brand-50 text-brand-600",
+            gradient: "from-brand-400 to-brand-600",
+            iconBg: "rgba(13, 148, 136, 0.12)",
             onClick: () => navigate("/resources?category=basics"),
         },
         {
             icon: Heart,
             title: "Self-Care Library",
             description: "Mindfulness exercises, breathing techniques, and relaxation guides",
-            color: "bg-fuchsia-100 text-fuchsia-600",
+            gradient: "from-pink-400 to-rose-400",
+            iconBg: "rgba(244, 114, 182, 0.12)",
             onClick: () => navigate("/resources?category=selfcare"),
         },
         {
             icon: Brain,
             title: "Exam Stress Management",
             description: "Practical strategies for managing KCSE examination pressure",
-            color: "bg-purple-100 text-purple-600",
-            onClick: () => navigate("/resources?category=basics"), // Can add a specific category later
+            gradient: "from-violet-400 to-purple-500",
+            iconBg: "rgba(167, 139, 250, 0.12)",
+            onClick: () => navigate("/resources?category=basics"),
         },
         {
             icon: Users,
             title: "Peer Stories",
             description: "Real experiences from students who've navigated similar challenges",
-            color: "bg-green-100 text-green-600",
+            gradient: "from-emerald-400 to-brand-500",
+            iconBg: "rgba(16, 185, 129, 0.12)",
             onClick: () => navigate("/peer-stories"),
         },
     ];
 
     return (
-        <div className="min-h-screen bg-slate-50 py-12 px-4">
-            <div className="max-w-6xl mx-auto">
-                <div className="flex justify-between items-center mb-6">
-                    <button
-                        onClick={() => navigate('/')}
-                        className="flex items-center text-slate-500 hover:text-brand-600 transition-colors"
-                    >
-                        <ArrowLeft className="mr-2 h-4 w-4" />
+        <div className="min-h-screen bg-slate-950 py-8 px-4 relative overflow-hidden">
+            {/* Background orbs */}
+            <div className="absolute top-[-150px] left-[-100px] w-[400px] h-[400px] bg-brand-500/8 rounded-full blur-[130px] pointer-events-none" />
+            <div className="absolute bottom-[-100px] right-[-80px] w-[350px] h-[350px] bg-sky-500/6 rounded-full blur-[100px] pointer-events-none" />
+
+            <div className="max-w-6xl mx-auto relative z-10">
+                {/* Header */}
+                <div className="flex justify-between items-center mb-10">
+                    <Link to="/" className="flex items-center gap-2 text-slate-500 hover:text-brand-400 transition-colors text-sm font-medium">
+                        <ArrowLeft size={16} />
                         Back to Home
-                    </button>
+                    </Link>
                     <button
                         onClick={() => {
                             localStorage.clear();
                             navigate('/login');
                         }}
-                        className="flex items-center text-red-400 hover:text-red-600 transition-colors font-bold text-sm"
+                        className="flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-xl transition-all"
+                        style={{
+                            color: '#fca5a5',
+                            background: 'rgba(239, 68, 68, 0.08)',
+                            border: '1px solid rgba(239, 68, 68, 0.15)',
+                        }}
                     >
-                        <LogOut className="mr-2 h-4 w-4" />
+                        <LogOut size={14} />
                         Logout
                     </button>
                 </div>
 
-                <div className="text-center mb-12 animate-fade-in">
-                    <h1 className="text-4xl font-bold text-slate-900 mb-4 tracking-tight">Wellness Resources</h1>
-                    <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+                {/* Hero */}
+                <div className="text-center mb-14">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6"
+                        style={{
+                            background: 'rgba(13, 148, 136, 0.1)',
+                            border: '1px solid rgba(94, 234, 212, 0.15)',
+                        }}>
+                        <Sparkles size={14} className="text-brand-400" />
+                        <span className="text-sm font-medium text-brand-300">Your Wellness Hub</span>
+                    </div>
+                    <h1 className="font-display text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">
+                        Wellness Resources
+                    </h1>
+                    <p className="text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
                         Explore our curated resources to maintain and enhance your mental well-being
                     </p>
                 </div>
 
+                {/* Resource Grid */}
                 <div className="grid md:grid-cols-2 gap-6 mb-12">
                     {resources.map((resource, index) => {
                         const Icon = resource.icon;
                         return (
                             <div
                                 key={resource.title}
-                                className="card shadow-soft hover:shadow-md transition-all duration-300 cursor-pointer animate-fade-in group"
+                                className="glass-card cursor-pointer group"
                                 style={{ animationDelay: `${index * 0.1}s` }}
                                 onClick={resource.onClick}
                             >
-                                <div className={`w-14 h-14 rounded-2xl ${resource.color} flex items-center justify-center mb-6 transition-transform group-hover:scale-110`}>
-                                    <Icon className="w-7 h-7" />
-                                </div>
-                                <h3 className="text-xl font-bold text-slate-900 mb-2">{resource.title}</h3>
-                                <p className="text-slate-600 mb-6">{resource.description}</p>
-                                <button
-                                    className="btn-secondary w-full py-2.5 text-sm"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        resource.onClick();
-                                    }}
+                                <div
+                                    className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6
+                                                bg-gradient-to-br ${resource.gradient} text-white
+                                                shadow-lg group-hover:scale-110 transition-transform duration-300`}
+                                    style={{ boxShadow: `0 8px 24px ${resource.iconBg}` }}
                                 >
-                                    Explore Resources
-                                </button>
+                                    <Icon size={26} />
+                                </div>
+                                <h3 className="text-xl font-display font-bold text-white mb-2 group-hover:text-brand-300 transition-colors">{resource.title}</h3>
+                                <p className="text-slate-400 mb-6 leading-relaxed">{resource.description}</p>
+                                <div
+                                    className="flex items-center gap-2 text-brand-400 text-sm font-semibold group-hover:gap-3 transition-all"
+                                >
+                                    Explore
+                                    <ArrowRight size={14} />
+                                </div>
                             </div>
                         );
                     })}
                 </div>
 
-                <div className="card bg-brand-600 text-white animate-fade-in border-none p-8 flex flex-col md:flex-row items-center justify-between gap-6">
-                    <div>
-                        <h2 className="text-2xl font-bold mb-2">Need More Support?</h2>
-                        <p className="text-brand-100">
+                {/* CTA Banner */}
+                <div className="rounded-3xl p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden"
+                    style={{
+                        background: 'linear-gradient(135deg, rgba(13,148,136,0.2) 0%, rgba(56,189,248,0.1) 100%)',
+                        border: '1px solid rgba(94, 234, 212, 0.15)',
+                    }}
+                >
+                    <div className="absolute top-0 right-0 w-40 h-40 bg-brand-400/10 rounded-full blur-[60px] pointer-events-none" />
+                    <div className="relative z-10">
+                        <h2 className="text-2xl font-display font-bold text-white mb-2">Need More Support?</h2>
+                        <p className="text-slate-400">
                             If you're experiencing increased stress or need someone to talk to
                         </p>
                     </div>
                     <button
-                        className="bg-white text-brand-600 px-8 py-3 rounded-xl font-bold hover:bg-brand-50 transition-all shadow-lg active:scale-95 whitespace-nowrap"
+                        className="btn-glass whitespace-nowrap relative z-10"
                         onClick={() => navigate('/triage')}
                     >
                         Take Another Assessment
