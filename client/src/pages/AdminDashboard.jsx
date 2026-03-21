@@ -41,9 +41,9 @@ const AdminDashboard = () => {
         setLoading(true);
         try {
             const [pendingRes, approvedRes, counselorsRes] = await Promise.all([
-                api.get('api/admin/requests'),
-                api.get('api/admin/schools/approved'),
-                api.get('api/admin/counselors')
+                api.get('admin/requests'),
+                api.get('admin/schools/approved'),
+                api.get('admin/counselors')
             ]);
 
             console.log("Pending Data:", pendingRes.data);
@@ -55,7 +55,7 @@ const AdminDashboard = () => {
             setCounselors(counselorsRes.data || []);
 
             // Fetch all conversations for the admin
-            const { data: convs, error: convErr } = await api.get('api/admin/conversations');
+            const { data: convs, error: convErr } = await api.get('admin/conversations');
             if (!convErr) setConversations(convs || []);
         } catch (err) {
             console.error("Error fetching admin data:", err);
@@ -75,7 +75,7 @@ const AdminDashboard = () => {
 
     const handleApprove = async (id) => {
         try {
-            const response = await api.post(`/api/admin/approve/${id}`);
+            const response = await api.post(`admin/approve/${id}`);
             const { accessCode } = response.data;
             alert(`✅ Approved!\n\nAccess Code: ${accessCode}\n\nPlease share this code with the school manually.`);
 
@@ -90,7 +90,7 @@ const AdminDashboard = () => {
     const handleReject = async (id) => {
         if (confirm("Reject this request?")) {
             try {
-                await api.delete(`api/admin/request/${id}`);
+                await api.delete(`admin/request/${id}`);
                 fetchAllData();
             } catch (err) {
                 alert("Failed to reject.");
@@ -104,10 +104,10 @@ const AdminDashboard = () => {
         try {
             let response;
             if (isEditingCounselor) {
-                response = await api.put(`api/admin/counselors/${currentCounselor.id}`, currentCounselor);
+                response = await api.put(`admin/counselors/${currentCounselor.id}`, currentCounselor);
                 alert("Counselor updated successfully!");
             } else {
-                response = await api.post('api/admin/counselors', currentCounselor);
+                response = await api.post('admin/counselors', currentCounselor);
                 const { access_code } = response.data;
                 alert(`✅ Counselor registered successfully!\n\nAccess Code: ${access_code}\n\nThe counselor can use this code to access their dashboard.`);
             }
@@ -128,7 +128,7 @@ const AdminDashboard = () => {
     const handleDeleteCounselor = async (id) => {
         if (confirm("Delete this counselor?")) {
             try {
-                await api.delete(`api/admin/counselors/${id}`);
+                await api.delete(`admin/counselors/${id}`);
                 fetchAllData();
             } catch (err) {
                 alert("Failed to delete counselor.");

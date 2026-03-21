@@ -26,7 +26,7 @@ const GoogleMeetCounseling = () => {
     useEffect(() => {
         const fetchCounselors = async () => {
             try {
-                const response = await api.get('/api/counselors');
+                const response = await api.get('counselors');
                 const data = response.data;
                 const filteredData = schoolName
                     ? data.filter(c => c.assigned_school === schoolName)
@@ -72,12 +72,12 @@ const GoogleMeetCounseling = () => {
         const endTime = Date.now() + (50 * 60 * 1000);
 
         try {
-            await api.post('/api/start-session', {
+            await api.post('start-session', {
                 counselorId: formData.counselorId,
                 studentEmail: schoolEmail,
                 endTime
             });
-            await api.post('/api/send-meeting-link', {
+            await api.post('send-meeting-link', {
                 studentEmail: schoolEmail,
                 counselorId: counselor.id,
                 counselorEmail: counselor.email,

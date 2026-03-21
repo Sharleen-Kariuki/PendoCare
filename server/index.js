@@ -267,7 +267,7 @@ app.post('/api/request-access', async (req, res) => {
 /**
  * 1.5 Admin: Fetch Pending Requests
  */
-app.get('/admin/requests', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+app.get('/api/admin/requests', authenticateToken, authorizeRoles('admin'), async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('access_requests')
@@ -287,7 +287,7 @@ app.get('/admin/requests', authenticateToken, authorizeRoles('admin'), async (re
  * 2. Admin: Approve Request
  * Generates code, updates DB, sends email
  */
-app.post('/admin/approve/:id', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+app.post('/api/admin/approve/:id', authenticateToken, authorizeRoles('admin'), async (req, res) => {
     const { id } = req.params;
     const accessCode = "NRB-" + Math.floor(1000 + Math.random() * 9000);
 
@@ -326,7 +326,7 @@ app.post('/admin/approve/:id', authenticateToken, authorizeRoles('admin'), async
  * 3. Admin: Reject Request
  * Deletes request from DB
  */
-app.delete('/admin/request/:id', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+app.delete('/api/admin/request/:id', authenticateToken, authorizeRoles('admin'), async (req, res) => {
     const { id } = req.params;
     try {
         const { error } = await supabase
@@ -347,7 +347,7 @@ app.delete('/admin/request/:id', authenticateToken, authorizeRoles('admin'), asy
 /**
  * 3.1 Admin: Fetch Approved Schools
  */
-app.get('/admin/schools/approved', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+app.get('/api/admin/schools/approved', authenticateToken, authorizeRoles('admin'), async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('access_requests')
@@ -366,7 +366,7 @@ app.get('/admin/schools/approved', authenticateToken, authorizeRoles('admin'), a
 /**
  * 3.2 General: Fetch Counselors (Accessible by Students/Staff)
  */
-app.get('/counselors', async (req, res) => {
+app.get('/api/counselors', async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('counselors')
@@ -384,7 +384,7 @@ app.get('/counselors', async (req, res) => {
 /**
  * 3.2 Admin: Counselor CRUD
  */
-app.get('/admin/counselors', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+app.get('/api/admin/counselors', authenticateToken, authorizeRoles('admin'), async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('counselors')
